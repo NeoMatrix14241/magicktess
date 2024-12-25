@@ -17,7 +17,7 @@ When executed, `start_process.bat` will create the following folders:
 ---
 ## 🛠️ Setup Instructions
 
-1. Navigate to the `Setup` folder and install the following:
+1. Navigate to the `Setup` folder and install the following with "setup.bat":
    - `ImageMagick-7.1.1-41-Q16-HDRI-x64-dll.exe`
    - `tesseract-ocr-w64-setup-5.5.0.20241111`
 
