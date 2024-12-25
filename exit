@@ -1,0 +1,41 @@
+[33mcommit a22392fa1cdf74c07cfa9dd9450fc9d4a12489f9[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m
+Author: NeoMatrix14241 <kylefcapistrano@gmail.com>
+Date:   Wed Dec 25 18:01:01 2024 +0800
+
+    upload local repository
+
+[33mcommit 8e95d4ea2d6212718e009d7102fa160366827eee[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m
+Author: Kyle Capistrano <73865948+NeoMatrix14241@users.noreply.github.com>
+Date:   Wed Dec 25 17:45:10 2024 +0800
+
+    Delete setup directory
+
+[33mcommit 59ad3ddb0e9a11c6cee45d6b00f88422d24b51fa[m
+Author: Kyle Capistrano <73865948+NeoMatrix14241@users.noreply.github.com>
+Date:   Wed Dec 25 17:42:45 2024 +0800
+
+    Create st
+
+[33mcommit 06b13488fd38e0fe3d5f179bc55bd1c11731e6b3[m
+Author: Kyle Capistrano <73865948+NeoMatrix14241@users.noreply.github.com>
+Date:   Wed Dec 25 11:39:29 2024 +0800
+
+    Update README.md
+
+[33mcommit d1abb608b57c42a21ada6c2e8fdd5c26b1d4785d[m
+Author: Kyle Capistrano <73865948+NeoMatrix14241@users.noreply.github.com>
+Date:   Wed Dec 25 11:38:20 2024 +0800
+
+    Update README.md
+
+[33mcommit 9c96cecbf75d150b46ea37db897c803a56a2f36b[m
+Author: Kyle Capistrano <73865948+NeoMatrix14241@users.noreply.github.com>
+Date:   Wed Dec 25 11:36:45 2024 +0800
+
+    Create README.md
+
+[33mcommit 4f546a76e2ba985f7a11c786891e0129c6e397e4[m
+Author: Kyle Capistrano <73865948+NeoMatrix14241@users.noreply.github.com>
+Date:   Wed Dec 25 11:36:07 2024 +0800
+
+    Initial commit
