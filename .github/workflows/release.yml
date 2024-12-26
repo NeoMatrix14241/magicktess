@@ -26,11 +26,11 @@ jobs:
           git tag $TAG_NAME
           git push origin $TAG_NAME
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Use the token to authenticate
+          GITHUB_TOKEN: ${{ secrets.MAGICKTES_RELEASE }}  # Use the token to authenticate
 
       - name: Upload ZIP to Release
         uses: softprops/action-gh-release@v1
         with:
           files: MagickTes.zip
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Use the token to authenticate
+          GITHUB_TOKEN: ${{ secrets.MAGICKTES_RELEASE }}  # Use the token to authenticate
