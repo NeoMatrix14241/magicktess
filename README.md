@@ -1,10 +1,26 @@
 # Automated OCR PowerShell Script
 
-**⚡ Alternative to NAPS2 OCR - Designed for DOE Project**
+**⚡ Alternative to NAPS2 OCR - Designed for Batch OCR Process**
 
 ### 🚀 Batch Folder OCR Only
 
-This PowerShell script automates OCR processing for batches of TIFF files, generating searchable PDFs.
+This PowerShell script automates OCR processing for batches of different image files, generating searchable PDFs.
+
+### Dependencies for Tesseract-OCR
+
+The PowerShell script utilizes the following software and models for Tesseract-OCR:
+
+1. **ImageMagick**  
+   - Version: ImageMagick-7.1.1-43-Q16-HDRI-x64-dll.exe  
+   - [Download ImageMagick](https://imagemagick.org/script/download.php)
+
+2. **Tesseract-OCR**  
+   - Version: tesseract-ocr-w64-setup-5.5.0.20241111.exe  
+   - [Download Tesseract-OCR](https://github.com/UB-Mannheim/tesseract/wiki)
+
+3. **Tessdata for Tesseract-OCR**  
+   - Models: `eng.traineddata`, `enm.traineddata`, `fil.traineddata`  
+   - [Download Tessdata models](https://github.com/tesseract-ocr/tessdata/tree/main)
 
 ### 📂 Folder Structure
 When executed, `start_process.bat` will create the following folders:
@@ -93,5 +109,5 @@ input
 - Right-click in the `input` folder while holding **Shift** and select **Open PowerShell window here**.
 - Run the following command:
    ```
-   .\testra.ps1 input
+   .\magicktes.ps1 input
    ```
