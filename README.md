@@ -41,7 +41,7 @@ When executed, `start_process.bat` will create the following folders:
    ```
    Default Location: C:\Program Files\Tesseract-OCR\tessdata
    ```
-4. Run `start_process.bat` to set up the necessary folders, then proceed to usage.
+4. Run `start_process.bat` to set up the necessary folders.
 
 ---
 ## ⚙️ Folder Structure & PDF Naming
