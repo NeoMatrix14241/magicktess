@@ -1,0 +1,25 @@
+name: Generate ZIP File for Download
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Generate ZIP File for Download
+        run: |
+          zip -r MagickTes.zip .  # Create a ZIP file named MagickTes.zip
+
+      - name: Upload ZIP to Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: MagickTes.zip 
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
