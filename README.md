@@ -10,17 +10,14 @@ This PowerShell script automates OCR processing for batches of different image f
 
 The PowerShell script utilizes the following software and models for Tesseract-OCR:
 
-1. **ImageMagick**  
+1. **[ImageMagick](https://imagemagick.org/script/download.php)**  
    - Version: ImageMagick-7.1.1-43-Q16-HDRI-x64-dll.exe  
-   - [Download ImageMagick](https://imagemagick.org/script/download.php)
 
-2. **Tesseract-OCR**  
+2. **[Tesseract-OCR](https://github.com/UB-Mannheim/tesseract/wiki)**  
    - Version: tesseract-ocr-w64-setup-5.5.0.20241111.exe  
-   - [Download Tesseract-OCR](https://github.com/UB-Mannheim/tesseract/wiki)
 
-3. **Tessdata for Tesseract-OCR**  
+3. **[Tessdata](https://github.com/tesseract-ocr/tessdata/tree/main) for Tesseract-OCR**  
    - Models: `eng.traineddata`, `enm.traineddata`, `fil.traineddata`  
-   - [Download Tessdata models](https://github.com/tesseract-ocr/tessdata/tree/main)
 
 ### 📂 Folder Structure
 When executed, `start_process.bat` will create the following folders:
