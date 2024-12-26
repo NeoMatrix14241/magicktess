@@ -46,7 +46,7 @@ When executed, `start_process.bat` will create the following folders:
 ---
 ## ▶️ Usage Instructions
 
-1. Place folders containing `.tif` files into the `input` directory.
+1. Place folders containing image files into the `input` directory.
 2. Run `start_process.bat` and wait for the process to complete.
 3. OCR-processed PDF files will be saved in the `output` directory.
 
