@@ -15,22 +15,22 @@ jobs:
 
       - name: Generate ZIP File for Download
         run: |
-          zip -r MagickTes.zip .
+          zip -r MagickTes.zip .  # Create ZIP file
 
       - name: Create a new tag
         id: create_tag
         run: |
-          TAG_NAME="v1.0.0"  # Define your tag name (e.g., v1.0.0)
+          TAG_NAME="v1.0.0"  # Define your tag name
           git config user.name "NeoMatrix14241"
           git config user.email "kylefcapistrano@gmail.com"
           git tag $TAG_NAME  # Create the tag
-          git push origin $TAG_NAME  # Push the tag to the repository
+          git push origin $TAG_NAME  # Push the tag to GitHub
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Use the token to authenticate
 
       - name: Upload ZIP to Release
         uses: softprops/action-gh-release@v1
         with:
-          files: MagickTes.zip  # Upload the generated zip file
+          files: MagickTes.zip  # Upload the generated ZIP file
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Use the token to authenticate
