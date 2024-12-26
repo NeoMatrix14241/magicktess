@@ -233,7 +233,7 @@ Remove-EmptyFolders -path $rootFolder
 # Clean up _preprocessed suffix in the input and archive folders
 Write-Log "Cleaning up _preprocessed suffix in the input and archive folders..."
 
-function Cleanup-PreprocessedSuffix {
+function Remove-PreprocessedSuffix {
     param (
         [string]$path
     )
@@ -252,8 +252,8 @@ function Cleanup-PreprocessedSuffix {
 }
 
 # Clean up _preprocessed files in input and archive
-Cleanup-PreprocessedSuffix -path $rootFolder
-Cleanup-PreprocessedSuffix -path $archiveFolder
+Remove-PreprocessedSuffix -path $rootFolder
+Remove-PreprocessedSuffix -path $archiveFolder
 
 # Calculate and log the elapsed time
 $endTime = Get-Date
