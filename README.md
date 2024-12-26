@@ -34,7 +34,9 @@ When executed, `start_process.bat` will create the following folders:
 ## 🛠️ Setup & Installation Instructions
 
 1. Download and extract MagickTes zip file contents
-- [MagickTes v1.0.0.0 Release](https://github.com/NeoMatrix14241/magicktes/releases/tag/MagickTes-v1.0.0.0)
+   ```
+   [MagickTes v1.0.0.0 Release](https://github.com/NeoMatrix14241/magicktes/releases/tag/MagickTes-v1.0.0.0)
+   ```
 
 2. Navigate to the `setup` folder and run "setup.bat".
 
