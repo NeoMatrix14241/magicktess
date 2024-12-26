@@ -1,9 +1,0 @@
-20241225_183339 - Script started.
-20241225_183339 - ImageMagick found at: C:\Program Files\ImageMagick-7.1.1-Q16-HDRI\magick.exe
-20241225_183339 - Tesseract found at: C:\Program Files\Tesseract-OCR\tesseract.exe
-20241225_183339 - Moving all contents from input folder to archive folder...
-20241225_183339 - Cleaning up empty folders in the input directory...
-20241225_183339 - Cleaning up _preprocessed suffix in the input and archive folders...
-20241225_183339 - Processing complete. Total time: 0.0209758 seconds
-20241225_183339 - Script finished.
-20241225_183339 - Process Stopped. --> Press 'Ctrl+C' again to exit OR type 'N' then press 'Enter' <--

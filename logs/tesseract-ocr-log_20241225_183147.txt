@@ -1,2 +1,0 @@
-20241225_183147 - Script started.
-20241225_183147 - Usage: .\testra.ps1 input
