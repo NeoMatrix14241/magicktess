@@ -17,7 +17,7 @@ When executed, `start_process.bat` will create the following folders:
 ---
 ## 🛠️ Setup Instructions
 
-1. Navigate to the `setup` folder and run "setup.bat":
+1. Navigate to the `setup` folder and run "setup.bat".
 
 2. Copy `.traineddata` files from `setup/tessdata_best` to Tesseract's tessdata directory:
    ```
