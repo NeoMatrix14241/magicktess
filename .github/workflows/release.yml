@@ -20,7 +20,7 @@ jobs:
       - name: Upload ZIP to Release
         uses: softprops/action-gh-release@v1
         with:
-          files: MagickTes.zip  # Upload the generated ZIP file
+          files: MagickTes-v1.0.0.0.zip  # Upload the generated ZIP file
           tag_name: "MagickTes-v1.0.0.0"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Use the token to authenticate
