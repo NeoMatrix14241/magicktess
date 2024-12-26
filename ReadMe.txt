@@ -11,9 +11,7 @@ Folder List:
 
 ---------------------------------------------------------------------
 HOW TO SETUP:
-1.) Go to Setup folder then install "ImageMagick-7.1.1-41-Q16-HDRI-x64-dll.exe" and "tesseract-ocr-w64-setup-5.5.0.20241111"
-2.) Copy the ".traineddata" files in "setup/tessdata_best" then go to Tesseract-OCR/tessdata directory then paste and overwrite if needed
-(Default: C:\Program Files\Tesseract-OCR\tessdata)
+1.) Go to setup folder then run "setup.bat"
 3.) Start "start_process.bat" to setup folders then proceed to usage below.
 ---------------------------------------------------------------------
 How TO USE:

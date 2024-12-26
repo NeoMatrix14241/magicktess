@@ -87,6 +87,9 @@ if (-not (Test-Path $tesseractPath)) {
     Write-Log "Tesseract found at: $tesseractPath"
 }
 
+# Define the accepted image file extensions (case insensitive)
+$imageExtensions = @(".bmp", ".dib", ".jpg", ".jpeg", ".jpe", ".jiff", ".gif", ".tif", ".tiff", ".png", ".heic")
+
 # Get all subfolders in the root folder, excluding output folders
 $subfolders = Get-ChildItem -Path $rootFolder -Recurse -Directory | Where-Object { $_.FullName -notlike "*\output*" }
 
@@ -98,17 +101,17 @@ foreach ($subfolder in $subfolders) {
     Write-Log "Processing subfolder: $($subfolder.FullName)"
     
     try {
-        # Try to get all TIF files from the current subfolder
-        $tifFiles = Get-ChildItem -Path $subfolder.FullName -Filter "*.tif" -ErrorAction Stop
+        # Get all image files with the specified extensions (case insensitive)
+        $imageFiles = Get-ChildItem -Path $subfolder.FullName -File | Where-Object { $imageExtensions -contains $_.Extension.ToLower() }
     } catch {
         # If there is an error accessing the subfolder, log a warning and skip it
         Write-Log "Warning: Cannot access subfolder $($subfolder.FullName). Skipping this subfolder."
         continue  # Skip this folder and continue with the next one
     }
 
-    if ($tifFiles.Count -gt 0) {
-        # If TIF files are found, process them
-        Write-Log "Found $($tifFiles.Count) TIF files in subfolder $($subfolder.Name). Preprocessing and creating PDF..."
+    if ($imageFiles.Count -gt 0) {
+        # If image files are found, process them
+        Write-Log "Found $($imageFiles.Count) image files in subfolder $($subfolder.Name). Preprocessing and creating PDF..."
 
         $baseFileName = [System.IO.Path]::GetFileName($subfolder.FullName)
         
@@ -126,30 +129,30 @@ foreach ($subfolder in $subfolders) {
         # Define the output PDF file path
         $outputPdf = Join-Path $outputSubfolder "$baseFileName"
 
-        # Create a temporary file to store the list of TIF images
+        # Create a temporary file to store the list of image files
         $tempImageList = [System.IO.Path]::GetTempFileName()
 
         try {
-            # Preprocess each TIF file using ImageMagick deskew (add _preprocessed suffix)
-            $preprocessedTifFiles = @()
-            foreach ($tifFile in $tifFiles) {
-                $preprocessedTifFile = [System.IO.Path]::Combine($tifFile.DirectoryName, "$($tifFile.BaseName)_preprocessed.tif")
+            # Preprocess each image file using ImageMagick deskew (add _preprocessed suffix)
+            $preprocessedImageFiles = @()
+            foreach ($imageFile in $imageFiles) {
+                $preprocessedImageFile = [System.IO.Path]::Combine($imageFile.DirectoryName, "$($imageFile.BaseName)_preprocessed.tif")
                 
                 # --------------------------------------------------------------------
                 # IMAGEMAGICK COMMAND AND PARAMETERS FOR IMAGE PREPROCESSING
                 # --------------------------------------------------------------------
-                & $imageMagickPath $tifFile.FullName +repage -deskew 40% $preprocessedTifFile
+                & $imageMagickPath $imageFile.FullName +repage -deskew 40% $preprocessedImageFile
                 # --------------------------------------------------------------------
 
-                Write-Log "Deskewed image created: $preprocessedTifFile"
+                Write-Log "Deskewed image created: $preprocessedImageFile"
 
-                $preprocessedTifFiles += $preprocessedTifFile
+                $preprocessedImageFiles += $preprocessedImageFile
             }
 
-            # Save the preprocessed TIF file paths to the temporary file
-            $preprocessedTifFiles | Set-Content -Path $tempImageList
+            # Save the preprocessed image file paths to the temporary file
+            $preprocessedImageFiles | Set-Content -Path $tempImageList
 
-            Write-Log "Running Tesseract OCR on preprocessed TIF files in subfolder $($subfolder.Name)..."
+            Write-Log "Running Tesseract OCR on preprocessed image files in subfolder $($subfolder.Name)..."
 
             # --------------------------------------------------------------------
             # TESSERACT-OCR COMMAND AND PARAMETERS FOR DOCUMENT OCR
@@ -166,15 +169,15 @@ foreach ($subfolder in $subfolders) {
             Remove-Item -Path $tempImageList -Force
             Write-Log "Temporary image list file removed: $tempImageList"
 
-            # Clean up preprocessed TIF files (remove _preprocessed suffix)
-            foreach ($preprocessedTifFile in $preprocessedTifFiles) {
-                Remove-Item -Path $preprocessedTifFile -Force
-                Write-Log "Removed preprocessed TIF file: $preprocessedTifFile"
+            # Clean up preprocessed image files (remove _preprocessed suffix)
+            foreach ($preprocessedImageFile in $preprocessedImageFiles) {
+                Remove-Item -Path $preprocessedImageFile -Force
+                Write-Log "Removed preprocessed image file: $preprocessedImageFile"
             }
         }
     } else {
-        # If no TIF files are found in the subfolder, log a message and skip
-        Write-Log "No TIF files found in subfolder $($subfolder.Name). Skipping..."
+        # If no image files are found in the subfolder, log a message and skip
+        Write-Log "No image files found in subfolder $($subfolder.Name). Skipping..."
     }
 }
 
@@ -238,10 +241,10 @@ function Remove-PreprocessedSuffix {
         [string]$path
     )
 
-    # Get all TIF files with _preprocessed suffix
-    $tifFiles = Get-ChildItem -Path $path -Recurse -Filter "*_preprocessed.tif"
+    # Get all image files with _preprocessed suffix
+    $imageFiles = Get-ChildItem -Path $path -Recurse -Filter "*_preprocessed.tif"
     
-    foreach ($file in $tifFiles) {
+    foreach ($file in $imageFiles) {
         # Remove the _preprocessed suffix and rename the file
         $newFileName = $file.Name.Replace("_preprocessed", "")
         $newFilePath = Join-Path $file.DirectoryName $newFileName
