@@ -20,17 +20,17 @@ jobs:
       - name: Create a new tag
         id: create_tag
         run: |
-          TAG_NAME="1.0.0.0"
+          TAG_NAME="1.0.0.0"  # Define your tag here
           git config user.name "NeoMatrix14241"
           git config user.email "kylefcapistrano@gmail.com"
-          git tag $TAG_NAME
-          git push https://github-actions:${{ secrets.MAGICKTES_RELEASE }}@github.com/NeoMatrix14241/magicktes.git $TAG_NAME
+          git tag $TAG_NAME  # Create the tag
+          git push origin $TAG_NAME  # Push the tag to the repository
         env:
-          GITHUB_TOKEN: ${{ secrets.MAGICKTES_RELEASE }}  # Use the token to authenticate
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Use the token to authenticate
 
       - name: Upload ZIP to Release
         uses: softprops/action-gh-release@v1
         with:
-          files: MagickTes.zip
+          files: MagickTes.zip  # Upload the generated zip file
         env:
-          GITHUB_TOKEN: ${{ secrets.MAGICKTES_RELEASE }}  # Use the token to authenticate
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Use the token to authenticate
