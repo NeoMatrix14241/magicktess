@@ -11,25 +11,15 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Generate ZIP File for Download
         run: |
-          zip -r MagickTes.zip .  # Create a ZIP file named MagickTes.zip
-
-      - name: Create a new tag
-        id: create_tag
-        run: |
-          # Create a tag based on the current commit SHA or use a version number
-          TAG_NAME="1.0.0.0"
-          git tag $TAG_NAME
-          git push origin $TAG_NAME
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Use the token to authenticate
+          zip -r MagickTes.zip .
 
       - name: Upload ZIP to Release
         uses: softprops/action-gh-release@v1
         with:
           files: MagickTes.zip 
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Use the token to authenticate
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
