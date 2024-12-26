@@ -25,7 +25,7 @@ if (-not (Test-Path -Path $logsFolder)) {
 
 # Create a timestamp for log files
 $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
-$logFilePath = Join-Path $logsFolder "tesseract-ocr-log_$timestamp.txt"
+$logFilePath = Join-Path $logsFolder "magicktes-log_$timestamp.log"
 
 # Define a function to write messages to the log file
 function Write-Log {
