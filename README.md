@@ -10,7 +10,7 @@ This PowerShell script automates OCR processing for batches of different image f
 
 The PowerShell script utilizes the following software and models for Tesseract-OCR:
 
-1. **[ImageMagick](https://imagemagick.org/script/download.php)**  
+1. **[ImageMagick](https://imagemagick.org)**  
    - Version: ImageMagick-7.1.1-43-Q16-HDRI-x64-dll.exe  
 
 2. **[Tesseract-OCR](https://github.com/UB-Mannheim/tesseract/wiki)**  
