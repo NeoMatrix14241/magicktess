@@ -1,3 +1,6 @@
+# NAME: MagickTes
+# CURRENT VERSION: v1.0.0.0
+
 name: Generate ZIP File for Download
 
 on:
