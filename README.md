@@ -47,8 +47,14 @@ When executed, `start_process.bat` will create the following folders:
 ## ▶️ Usage Instructions
 
 1. Place folders containing image files into the `input` directory.
-2. Run `start_process.bat` and wait for the process to complete.
-3. OCR-processed PDF files will be saved in the `output` directory.
+   ```
+   Supported Image Extensions/Types:
+   .bmp   .jpeg   .gif   .png
+   .dib   .jpe    .tif   .heic
+   .jpg   .jiff   .tiff
+   ```
+3. Run `start_process.bat` and wait for the process to complete.
+4. OCR-processed PDF files will be saved in the `output` directory.
 
 ---
 ## ⚙️ Folder Structure & PDF Naming
