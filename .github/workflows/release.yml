@@ -17,23 +17,20 @@ jobs:
         run: |
           zip -r MagickTes.zip .
 
-      - name: Delete the existing tag (if exists)
-        run: |
-          git tag -d 1.0.0.0 || echo "Tag not found locally"
-          git push origin --delete 1.0.0.0 || echo "Tag not found remotely"
-
       - name: Create a new tag
         id: create_tag
         run: |
-          TAG_NAME="1.0.0.0"  # Define your tag here
+          TAG_NAME="v1.0.0"  # Define your tag name (e.g., v1.0.0)
           git config user.name "NeoMatrix14241"
           git config user.email "kylefcapistrano@gmail.com"
           git tag $TAG_NAME  # Create the tag
           git push origin $TAG_NAME  # Push the tag to the repository
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Use the token to authenticate
 
       - name: Upload ZIP to Release
         uses: softprops/action-gh-release@v1
         with:
-          files: MagickTes.zip
+          files: MagickTes.zip  # Upload the generated zip file
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Use the token to authenticate
