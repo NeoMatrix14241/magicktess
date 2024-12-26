@@ -15,7 +15,7 @@ jobs:
 
       - name: Generate ZIP File for Download
         run: |
-          zip -r MagickTes.zip .  # Create ZIP file
+          zip -r MagickTes.zip setup ReadMe.txt start_process.bat magicktes.ps1
 
       - name: Create a new tag
         id: create_tag
