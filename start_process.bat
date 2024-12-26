@@ -34,6 +34,6 @@ echo.
 echo The script will process your input folder for OCR
 pause
 cls
-powershell.exe -ExecutionPolicy RemoteSigned -File "testra.ps1" "input"
+powershell.exe -ExecutionPolicy RemoteSigned -File "magicktes.ps1" "input"
 GOTO START
 pause
