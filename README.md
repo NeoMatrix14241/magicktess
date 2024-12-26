@@ -76,7 +76,7 @@ input
 - **PDF Name:** The folder marked with (★) becomes the PDF name.
 - **Example:** `subfolder1` generates `subfolder1.pdf`.
 
-**Avoid This Structure:**
+<span style="color:red">**Avoid This Structure:**</span>
 ```
 input
    ├── folder1
