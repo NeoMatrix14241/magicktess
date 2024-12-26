@@ -24,7 +24,7 @@ jobs:
           git config user.name "NeoMatrix14241"
           git config user.email "kylefcapistrano@gmail.com"
           git tag $TAG_NAME
-          git push origin $TAG_NAME
+          git push https://github-actions:${{ secrets.MAGICKTES_RELEASE }}@github.com/NeoMatrix14241/magicktes.git $TAG_NAME
         env:
           GITHUB_TOKEN: ${{ secrets.MAGICKTES_RELEASE }}  # Use the token to authenticate
 
