@@ -31,15 +31,18 @@ When executed, `start_process.bat` will create the following folders:
 - **logs** – All process logs are stored here.
 
 ---
-## 🛠️ Setup Instructions
+## 🛠️ Setup & Installation Instructions
 
-1. Navigate to the `setup` folder and run "setup.bat".
+1. Download and extract MagickTes zip file contents
+- [MagickTes v1.0.0.0 Release](https://github.com/NeoMatrix14241/magicktes/releases/tag/MagickTes-v1.0.0.0)
 
-2. Copy `.traineddata` files from `setup/tessdata_best` to Tesseract's tessdata directory:
+2. Navigate to the `setup` folder and run "setup.bat".
+
+3. Copy `.traineddata` files from `setup/tessdata_best` to Tesseract's tessdata directory:
    ```
    Default Location: C:\Program Files\Tesseract-OCR\tessdata
    ```
-3. Run `start_process.bat` to set up the necessary folders, then proceed to usage.
+4. Run `start_process.bat` to set up the necessary folders, then proceed to usage.
 
 ---
 ## ▶️ Usage Instructions
