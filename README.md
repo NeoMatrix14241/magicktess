@@ -94,19 +94,6 @@ input
 - **folder2** → `folder2.pdf`
 
 ---
-## 🔗 Repository
-[Tesseract-OCR Repository](https://github.com/tesseract-ocr/tesseract)
-
----
-## ⚡ Command Line Installer
-- `setup/tesseract-ocr-w64-setup-5.5.0.20241111.exe`
-- `setup/ImageMagick-7.1.1-41-Q16-HDRI-x64-dll.exe`
-
----
-## ❗ Notes
-- Press `CTRL + C` in PowerShell to cancel the operation.
-
----
 ## 🧪 Experimental (Optional)
 - Right-click in the `input` folder while holding **Shift** and select **Open PowerShell window here**.
 - Run the following command:
