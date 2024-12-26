@@ -44,19 +44,6 @@ When executed, `start_process.bat` will create the following folders:
 4. Run `start_process.bat` to set up the necessary folders, then proceed to usage.
 
 ---
-## ▶️ Usage Instructions
-
-1. Place folders containing image files into the `input` directory.
-   ```
-   Supported Image Extensions/Types:
-   .bmp   .jpeg   .gif   .png
-   .dib   .jpe    .tif   .heic
-   .jpg   .jiff   .tiff
-   ```
-3. Run `start_process.bat` and wait for the process to complete.
-4. OCR-processed PDF files will be saved in the `output` directory.
-
----
 ## ⚙️ Folder Structure & PDF Naming
 
 **Proper Folder Structure:**
@@ -76,7 +63,7 @@ input
 - **PDF Name:** The folder marked with (★) becomes the PDF name.
 - **Example:** `subfolder1` generates `subfolder1.pdf`.
 
-<span style="color:red">**Avoid This Structure:**</span>
+<span style="color:red">Avoid This Structure:</span>
 ```
 input
    ├── folder1
@@ -91,6 +78,19 @@ input
 ```
 - **Issue:** Files at the root of `folder1` (★) will interrupt processing of subfolders (<!>).
 - **Solution:** Ensure `.tif` files are inside subfolders.
+
+---
+## ▶️ Usage Instructions
+
+1. Place folders containing image files into the `input` directory.
+   ```
+   Supported Image Extensions/Types:
+   .bmp   .jpeg   .gif   .png
+   .dib   .jpe    .tif   .heic
+   .jpg   .jiff   .tiff
+   ```
+3. Run `start_process.bat` and wait for the process to complete.
+4. OCR-processed PDF files will be saved in the `output` directory.
 
 ---
 ## 📄 PDF Naming Convention
