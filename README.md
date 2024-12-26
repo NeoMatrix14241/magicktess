@@ -6,6 +6,7 @@
 
 This PowerShell script automates OCR processing for batches of different image files, generating searchable PDFs.
 
+---
 ### Dependencies for MagickTes
 
 The PowerShell script utilizes the following software and models for Tesseract-OCR:
@@ -17,8 +18,9 @@ The PowerShell script utilizes the following software and models for Tesseract-O
    - Version: tesseract-ocr-w64-setup-5.5.0.20241111.exe  
 
 3. **[Tessdata](https://github.com/tesseract-ocr/tessdata/tree/main) for Tesseract-OCR**  
-   - Models: `eng.traineddata`, `enm.traineddata`, `fil.traineddata`  
+   - Models: `eng.traineddata`, `enm.traineddata`, `fil.traineddata`
 
+---
 ### 📂 Folder Structure
 When executed, `start_process.bat` will create the following folders:
 
