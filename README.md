@@ -46,7 +46,23 @@ When executed, `start_process.bat` will create the following folders:
 ---
 ## ⚙️ Folder Structure & PDF Naming
 
-**Proper Folder Structure:**
+❌❌❌ **Avoid This Structure:**
+```
+input
+   ├── folder1
+   │    ├── image1.tif ★
+   │    ├── image2.tif ★
+   │    ├── subfolder1 <!>
+   │    │    ├── image1.tif
+   │    │    └── image2.tif
+   │    ├── subfolder2
+   │    │    ├── image1.tif
+   │    │    └── image2.tif
+```
+- **Issue:** Files at the root of `folder1` (★) will interrupt processing of subfolders (<!>).
+- **Solution:** Ensure `.tif` files are inside subfolders.
+
+✔️✔️✔️ **Proper Folder Structure:**
 ```
 input
    ├── folder1
@@ -62,22 +78,6 @@ input
 ```
 - **PDF Name:** The folder marked with (★) becomes the PDF name.
 - **Example:** `subfolder1` generates `subfolder1.pdf`.
-
-<span style="color:red">Avoid This Structure:</span>
-```
-input
-   ├── folder1
-   │    ├── image1.tif ★
-   │    ├── image2.tif ★
-   │    ├── subfolder1 <!>
-   │    │    ├── image1.tif
-   │    │    └── image2.tif
-   │    ├── subfolder2
-   │    │    ├── image1.tif
-   │    │    └── image2.tif
-```
-- **Issue:** Files at the root of `folder1` (★) will interrupt processing of subfolders (<!>).
-- **Solution:** Ensure `.tif` files are inside subfolders.
 
 ---
 ## ▶️ Usage Instructions
