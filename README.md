@@ -6,7 +6,7 @@
 
 This PowerShell script automates OCR processing for batches of different image files, generating searchable PDFs.
 
-### Dependencies for Tesseract-OCR
+### Dependencies for MagickTes
 
 The PowerShell script utilizes the following software and models for Tesseract-OCR:
 
