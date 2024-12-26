@@ -8,7 +8,17 @@ Folder List:
 > output - Where your processed OCR files in pdf format
 > logs - Where the logs are stored for the entire process
 
+---------------------------------------------------------------------
+The PowerShell script utilizes the following softwares and tessdata models for Tesseract-OCR:
 
+ImageMagick (ImageMagick-7.1.1-43-Q16-HDRI-x64-dll.exe)
+https://imagemagick.org/script/download.php
+
+Tesseract-OCR (tesseract-ocr-w64-setup-5.5.0.20241111.exe)
+https://github.com/UB-Mannheim/tesseract/wiki
+
+tessdata for Tesseract-OCR (eng.traineddata, enm.traineddata, fil.traineddata)
+https://github.com/tesseract-ocr/tessdata/tree/main
 ---------------------------------------------------------------------
 HOW TO SETUP:
 1.) Go to setup folder then run "setup.bat"
