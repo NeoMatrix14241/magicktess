@@ -18,12 +18,12 @@ jobs:
 
       - name: Generate ZIP File for Download
         run: |
-          zip -r MagickTess.zip setup ReadMe.txt start_process.bat magicktess.ps1
+          zip -r MagickTess-v1.0.0.0.zip setup ReadMe.txt start_process.bat magicktess.ps1
 
       - name: Upload ZIP to Release
         uses: softprops/action-gh-release@v1
         with:
-          files: MagickTess.zip
+          files: MagickTess-v1.0.0.0.zip
           tag_name: "MagickTess-v1.0.0.0"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
