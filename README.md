@@ -7,7 +7,7 @@
 This PowerShell script automates OCR processing for batches of different image files, generating searchable PDFs.
 
 ---
-### Dependencies for MagickTes
+### Dependencies for MagickTess
 
 The PowerShell script utilizes the following software and models for Tesseract-OCR:
 
@@ -32,8 +32,8 @@ When executed, `start_process.bat` will create the following folders:
 ---
 ## 🛠️ Setup & Installation Instructions
 
-1. Download and extract MagickTes zip file contents
-   - [MagickTes v1.0.0.0 Release](https://github.com/NeoMatrix14241/magicktes/releases/tag/MagickTes-v1.0.0.0)
+1. Download and extract MagickTess zip file contents
+   - [MagickTess v1.0.0.0 Release](https://github.com/NeoMatrix14241/magicktess/releases/tag/MagickTess-v1.0.0.0)
 
 2. Navigate to the `setup` folder and run "setup.bat".
 
@@ -104,5 +104,5 @@ input
 - Right-click in the `input` folder while holding **Shift** and select **Open PowerShell window here**.
 - Run the following command:
    ```
-   .\magicktes.ps1 input
+   .\magicktess.ps1 input
    ```

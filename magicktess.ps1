@@ -25,7 +25,7 @@ if (-not (Test-Path -Path $logsFolder)) {
 
 # Create a timestamp for log files
 $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
-$logFilePath = Join-Path $logsFolder "magicktes-log_$timestamp.log"
+$logFilePath = Join-Path $logsFolder "magicktess-log_$timestamp.log"
 
 # Define a function to write messages to the log file
 function Write-Log {
@@ -41,8 +41,8 @@ Write-Log "Script started."
 
 # Check if an input argument is provided; if not, show usage and exit
 if ($args.Length -eq 0) {
-    Write-Log "Usage: .\magicktes.ps1 input"
-    Write-Host "Usage: .\magicktes.ps1 input"
+    Write-Log "Usage: .\magicktess.ps1 input"
+    Write-Host "Usage: .\magicktess.ps1 input"
     exit
 }
 
