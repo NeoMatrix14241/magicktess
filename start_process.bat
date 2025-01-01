@@ -1,7 +1,7 @@
 @echo off
 color 0b
 cls
-title Testra OCR - Automated OCR Processing Tool
+title MagickTess OCR - Automated OCR Processing Tool
 :START
 cls
 if not exist "input" mkdir input
@@ -19,12 +19,12 @@ echo Repository:
 echo https://github.com/tesseract-ocr/tesseract
 echo ---------------------------------------------------------------------------------------------
 echo Command Line Installer:
-echo ^> setup/tesseract-ocr-w64-setup-5.5.0.20241111.exe
+echo ^> just run "setup/setup.bat"
 echo ---------------------------------------------------------------------------------------------
 echo Note:
 echo ^> press "ctrl + c" in powershell to cancel
 echo ---------------------------------------------------------------------------------------------
-echo Folder List:
+echo Folder List Generated:
 echo ^> input - [BATCH OCR ONLY] Where your folders with tif files that will be processed for OCR
 echo ^> archive - Where your folders in input folder will be moved after OCR
 echo ^> output - Where your processed OCR files in pdf format
@@ -34,6 +34,17 @@ echo.
 echo The script will process your input folder for OCR
 pause
 cls
-powershell.exe -ExecutionPolicy RemoteSigned -File "magicktess.ps1" "input"
+where pwsh >nul 2>nul
+if %errorlevel% neq 0 (
+    powershell.exe -ExecutionPolicy RemoteSigned -File "magicktess.ps1" "input"
+) else (
+    pwsh -NoProfile -Command "exit" >nul 2>nul
+    if %errorlevel% neq 0 (
+        powershell.exe -ExecutionPolicy RemoteSigned -File "magicktess.ps1" "input"
+    ) else (
+        pwsh.exe -ExecutionPolicy RemoteSigned -File "magicktess.ps1" "input"
+    )
+)
+
 GOTO START
 pause

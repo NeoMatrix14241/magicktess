@@ -1,90 +1,78 @@
-﻿# Set a global variable to track if a cancel request is made
-$global:cancelRequested = $false
+﻿$global:cancelRequested = $false
 
-# Register an event for when PowerShell exits
 $null = Register-EngineEvent -SourceIdentifier PowerShell.Exiting -Action {
     if ($global:cancelRequested) {
-        Write-Log "Interrupt detected. Ignoring the exit request."
+        Write-Log "Interrupt detected. Ignoring the exit request.", "Warning"
         $global:cancelRequested = $false
         $Host.UI.WriteLine("Process interrupted. Will continue execution.")
     } else {
-        Write-Log "Process Stopped. --> Press 'Ctrl+C' again to exit OR type 'N' then press 'Enter' <--"
+        Write-Log "Process Stopped. --> Press 'Ctrl+C' again to exit OR type 'N' then press 'Enter' <--", "Error"
         $global:cancelRequested = $true
     }
 }
 
-# Get the directory where the script is located
 $scriptDirectory = $PSScriptRoot
-
-# Define a folder for storing logs
 $logsFolder = Join-Path $scriptDirectory "logs"
 if (-not (Test-Path -Path $logsFolder)) {
     New-Item -ItemType Directory -Path $logsFolder
-    Write-Host "Created logs folder: $logsFolder"
+    Write-Host "[32mCreated logs folder: $logsFolder[0m"
 }
 
-# Create a timestamp for log files
 $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
 $logFilePath = Join-Path $logsFolder "magicktess-log_$timestamp.log"
 
-# Define a function to write messages to the log file
 function Write-Log {
     param (
-        [string]$message
+        [string]$message,
+        [string]$level = "Info"
     )
-    $logMessage = "$timestamp - $message"
-    Add-Content -Path $logFilePath -Value $logMessage  # Write to log file
-    Write-Host $logMessage  # Display to console
+
+    $logMessage = "$timestamp - [$level] $message"
+    Add-Content -Path $logFilePath -Value $logMessage
+
+    switch ($level) {
+        "Info"    { Write-Host "[36m$logMessage[0m" }
+        "Warning" { Write-Host "[33m$logMessage[0m" }
+        "Error"   { Write-Host "[31m$logMessage[0m" }
+        default   { Write-Host $logMessage }
+    }
 }
 
-Write-Log "Script started."
+Write-Log "Script started." "Info"
 
-# Check if an input argument is provided; if not, show usage and exit
 if ($args.Length -eq 0) {
-    Write-Log "Usage: .\magicktess.ps1 input"
-    Write-Host "Usage: .\magicktess.ps1 input"
+    Write-Log "Usage: .\magicktess.ps1 input" "Warning"
     exit
 }
 
-# Define the root folder based on the provided argument
 $rootFolder = Join-Path $scriptDirectory $args[0]
-
-# Create an output folder for processed files if it doesn't exist
 $outputFolder = Join-Path $scriptDirectory "output"
 if (-not (Test-Path -Path $outputFolder)) {
     New-Item -ItemType Directory -Path $outputFolder
-    Write-Log "Created folder for processed PDFs: $outputFolder"
+    Write-Log "Created folder for processed PDFs: $outputFolder" "Info"
 }
 
-# Create an archive folder if it doesn't exist (to store original files after processing)
 $archiveFolder = Join-Path $scriptDirectory "archive"
 if (-not (Test-Path -Path $archiveFolder)) {
     New-Item -ItemType Directory -Path $archiveFolder
-    Write-Log "Created archive folder: $archiveFolder"
+    Write-Log "Created archive folder: $archiveFolder" "Info"
 }
 
-# --------------------------------------------------------------------
-# WHERE THE IMAGEMAGICK (magick) AND TESSERACT-OCR COMMAND LINE ARE INSTALLED
-# --------------------------------------------------------------------
 $imageMagickPath = "C:\Program Files\ImageMagick-7.1.1-Q16-HDRI\magick.exe"
 $tesseractPath = "C:\Program Files\Tesseract-OCR\tesseract.exe"
-# --------------------------------------------------------------------
 
-# Check if ImageMagick and Tesseract are installed
 if (-not (Test-Path $imageMagickPath)) {
-    Write-Log "ImageMagick not found at: $imageMagickPath"
-    Write-Host "ImageMagick not found at: $imageMagickPath"
+    Write-Log "ImageMagick not found at: $imageMagickPath" "Error"
     exit
 } else {
-    Write-Log "ImageMagick found at: $imageMagickPath"
+    Write-Log "ImageMagick found at: $imageMagickPath" "Info"
 }
 
 if (-not (Test-Path $tesseractPath)) {
-    Write-Log "Tesseract not found at: $tesseractPath"
-    Write-Host "Tesseract not found at: $tesseractPath"
+    Write-Log "Tesseract not found at: $tesseractPath" "Error"
     exit
 } else {
-    Write-Log "Tesseract found at: $tesseractPath"
+    Write-Log "Tesseract found at: $tesseractPath" "Info"
 }
 
 # Define the accepted image file extensions (case insensitive)

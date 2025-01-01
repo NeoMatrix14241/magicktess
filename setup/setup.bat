@@ -1,6 +1,6 @@
 @echo off
 color 0b
-title Testra - Tesseract-OCR + ImageMagick Setup
+title MagickTess - Tesseract-OCR + ImageMagick + PowerShell 7 Setup
 
 :: Check for Administrator Privileges
 net session >nul 2>&1
@@ -9,7 +9,7 @@ if %errorlevel% neq 0 (
     echo Please run as Administrator.
     echo.
     echo Attempting to restart the script with elevated privileges...
-    powershell -Command "Start-Process cmd -ArgumentList '/c %~s0' -Verb RunAs"
+    powershell -Command "Start-Process '%~f0' -Verb RunAs"
     exit /b
 )
 
@@ -28,6 +28,10 @@ echo Tesseract-OCR Trained Data LTSM Models Patch Installed.
 echo Installing ImageMagick ...
 start /wait "" "data\ImageMagick-7.1.1-41-Q16-HDRI-x64-dll.exe"
 echo ImageMagick installed.
+
+:: echo Installing PowerShell 7 ...
+:: start /wait "" "data\PowerShell-7.4.6-win-x64.msi"
+:: echo PowerShell 7 installed.
 
 echo Installation complete.
 pause
