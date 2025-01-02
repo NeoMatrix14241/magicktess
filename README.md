@@ -20,7 +20,7 @@ The PowerShell script utilizes the following software and models for Tesseract-O
 3. **[Tessdata](https://github.com/tesseract-ocr/tessdata/tree/main) for Tesseract-OCR**  
    - Models: `eng.traineddata`, `enm.traineddata`, `fil.traineddata`
    
-4. **[PowerShell 7](https://github.com/PowerShell/PowerShell) Optional, only offers better debugging**
+4. **[PowerShell 7](https://github.com/PowerShell/PowerShell) [Optional - Only offers better debugging]**
    - Version: PowerShell-7.4.6-win-x64.msi
 
 ---
