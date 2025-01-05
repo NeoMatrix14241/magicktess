@@ -57,9 +57,12 @@ if (-not (Test-Path -Path $archiveFolder)) {
     New-Item -ItemType Directory -Path $archiveFolder
     Write-Log "Created archive folder: $archiveFolder" "Info"
 }
-
+# --------------------------------------------------------------------
+# IMAGEMAGICK AND TESSERACT OCR PATH / INSTALLATION FOLDER
+# --------------------------------------------------------------------
 $imageMagickPath = "C:\Program Files\ImageMagick-7.1.1-Q16-HDRI\magick.exe"
 $tesseractPath = "C:\Program Files\Tesseract-OCR\tesseract.exe"
+# --------------------------------------------------------------------
 
 if (-not (Test-Path $imageMagickPath)) {
     Write-Log "ImageMagick not found at: $imageMagickPath" "Error"
