@@ -25,6 +25,10 @@ The PowerShell script utilizes the following software and models for Tesseract-O
    
 5. **[PowerShell 7](https://github.com/PowerShell/PowerShell) [For Multithreading Support]**
    - Version: PowerShell-7.4.6-win-x64.msi
+  
+6. **[GhostScript](https://ghostscript.com/releases/gsdnld.html)
+   - Version: gs10040w64.exe
+
 ---
 ### 📂 Folder Structure
 When executed, `start_process.bat` will create the following folders:
