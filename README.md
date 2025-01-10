@@ -15,14 +15,16 @@ The PowerShell script utilizes the following software and models for Tesseract-O
    - Version: ImageMagick-7.1.1-43-Q16-HDRI-x64-dll.exe  
 
 2. **[Tesseract-OCR](https://github.com/UB-Mannheim/tesseract/wiki)**  
-   - Version: tesseract-ocr-w64-setup-5.5.0.20241111.exe  
+   - Version: tesseract-ocr-w64-setup-5.5.0.20241111.exe
+  
+3. **[PDFtk Server](https://www.pdflabs.com/tools/pdftk-server/)**
+   - Version: pdftk_server-2.02-win-setup.exe
 
-3. **[Tessdata](https://github.com/tesseract-ocr/tessdata/tree/main) for Tesseract-OCR**  
+4. **[Tessdata](https://github.com/tesseract-ocr/tessdata/tree/main) for Tesseract-OCR**  
    - Models: `eng.traineddata`, `enm.traineddata`, `fil.traineddata`
    
-4. **[PowerShell 7](https://github.com/PowerShell/PowerShell) [Optional - Only offers better debugging]**
+5. **[PowerShell 7](https://github.com/PowerShell/PowerShell) [For Multithreading Support]**
    - Version: PowerShell-7.4.6-win-x64.msi
-
 ---
 ### 📂 Folder Structure
 When executed, `start_process.bat` will create the following folders:
