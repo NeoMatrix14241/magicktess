@@ -29,9 +29,17 @@ echo Installing ImageMagick ...
 start /wait "" "data\ImageMagick-7.1.1-41-Q16-HDRI-x64-dll.exe"
 echo ImageMagick installed.
 
-:: echo Installing PowerShell 7 ...
-:: start /wait "" "data\PowerShell-7.4.6-win-x64.msi"
-:: echo PowerShell 7 installed.
+echo Installing PowerShell 7 ...
+start /wait "" "data\PowerShell-7.4.6-win-x64.msi"
+echo PowerShell 7 installed.
+
+echo Installing PDFtk Server 2.02 ...
+start /wait "" "data\pdftk_server-2.02-win-setup.exe"
+echo PDFtk Server 2.02 installed.
+
+echo Installing Ghostscript 10.04.0 for Windows ...
+start /wait "" "data\gs10040w64.exe"
+echo PDFtk Server 2.02 installed.
 
 echo Installation complete.
 pause
