@@ -1,7 +1,7 @@
 @echo off
 color 0b
 cls
-title MagickTess OCR - Automated OCR Processing Tool
+title MagickTessTK OCR - Automated OCR Processing Tool
 :START
 cls
 if not exist "input" mkdir input
