@@ -331,6 +331,7 @@ $subfolders | ForEach-Object -ThrottleLimit $maxThreads -Parallel {
             
             # Process images in parallel using Jobs instead of ForEach-Object -Parallel
             $jobs = @()
+            $completedJobs = @{}
             
             foreach ($imageFile in $imageFiles) {
                 $job = Start-ThreadJob -ThrottleLimit $maxThreads -ScriptBlock {
@@ -393,11 +394,21 @@ $subfolders | ForEach-Object -ThrottleLimit $maxThreads -Parallel {
                 $jobs += $job
             }
 
-            # Wait for all jobs to complete
-            $jobs | Wait-Job | Receive-Job
-            $jobs | Remove-Job
+            # Wait for jobs and process output as they complete
+            while ($jobs.Count -gt 0) {
+                $completed = $jobs | Where-Object { $_.State -eq 'Completed' }
+                foreach ($job in $completed) {
+                    if (-not $completedJobs.ContainsKey($job.Id)) {
+                        $job | Receive-Job
+                        $completedJobs[$job.Id] = $true
+                        $jobs = $jobs | Where-Object { $_.Id -ne $job.Id }
+                        $job | Remove-Job
+                    }
+                }
+                Start-Sleep -Milliseconds 100
+            }
 
-            Write-Log "All ImageMagick parallel processing complete. Starting Tesseract OCR..."
+            Write-Log "All ImageMagick parallel processing complete. Starting Tesseract OCR..." "Info" "ImageMagick"
             
             # Get the sorted list of successfully preprocessed files
             $sortedPreprocessedFiles = $preprocessedFiles.ToArray() | Sort-Object
@@ -405,6 +416,7 @@ $subfolders | ForEach-Object -ThrottleLimit $maxThreads -Parallel {
             
             # Process Tesseract in parallel using jobs
             $tesseractJobs = @()
+            $completedTesseractJobs = @{}
             
             foreach ($preprocessedImageFile in $sortedPreprocessedFiles) {
                 $job = Start-ThreadJob -ThrottleLimit $maxThreads -ScriptBlock {
@@ -464,19 +476,25 @@ $subfolders | ForEach-Object -ThrottleLimit $maxThreads -Parallel {
                 $tesseractJobs += $job
             }
 
-            # Wait for all Tesseract jobs to complete and collect results
-            $tesseractResults = $tesseractJobs | Wait-Job | Receive-Job
-            $tesseractJobs | Remove-Job
-
-            # Add successful results to pdfFiles
-            foreach ($result in $tesseractResults) {
-                if ($result) {
-                    $pdfFiles.Add($result)
+            # Wait for Tesseract jobs and process output as they complete
+            while ($tesseractJobs.Count -gt 0) {
+                $completed = $tesseractJobs | Where-Object { $_.State -eq 'Completed' }
+                foreach ($job in $completed) {
+                    if (-not $completedTesseractJobs.ContainsKey($job.Id)) {
+                        $result = $job | Receive-Job
+                        if ($result) {
+                            $pdfFiles.Add($result)
+                        }
+                        $completedTesseractJobs[$job.Id] = $true
+                        $tesseractJobs = $tesseractJobs | Where-Object { $_.Id -ne $job.Id }
+                        $job | Remove-Job
+                    }
                 }
+                Start-Sleep -Milliseconds 100
             }
 
-            Write-Log "All Tesseract parallel processing complete. Starting PDF merge..."
-            
+            Write-Log "All Tesseract parallel processing complete. Starting PDF merge..." "Info"
+
             # Convert ConcurrentBag to sorted array for PDFtk
             $sortedPdfFiles = $pdfFiles.ToArray() | Sort-Object
 
