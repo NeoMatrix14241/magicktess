@@ -1,4 +1,13 @@
-input/
-output/
-archive/
-logs/
+*
+
+!.github/
+!.gitattributes
+!.gitignore
+!README.md
+!LICENSE
+
+!magicktesstk-mt.ps1
+!magicktesstk-st.ps1
+!setup/
+!setup/**/*
+!start_processbat
