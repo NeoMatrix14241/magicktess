@@ -19,7 +19,7 @@ if (-not (Test-Path -Path $logsFolder)) {
 }
 
 $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
-$logFilePath = Join-Path $logsFolder "magicktess-log_$timestamp.log"
+$logFilePath = Join-Path $logsFolder "magicktesstk-log_$timestamp.log"
 
 function Write-Log {
     param (

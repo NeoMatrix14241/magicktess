@@ -31,7 +31,7 @@ if (-not (Test-Path -Path $logsFolder)) {
 
 # Generate timestamp and log file path
 $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
-$logFilePath = Join-Path $logsFolder "magicktess-log_$timestamp.log"
+$logFilePath = Join-Path $logsFolder "magicktesstk-log_$timestamp.log"
 
 # Function to write messages to the log file and console
 function Write-Log {
