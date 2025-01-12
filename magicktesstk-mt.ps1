@@ -44,18 +44,20 @@ function Write-Log {
     $logMessage = "$(Get-Date -Format 'yyyyMMdd_HHmmss') - [$level] $message"
     Add-Content -Path $logFilePath -Value $logMessage
 
-    # Define color based on tool and level
-    $color = switch ($tool) {
-        "ImageMagick" { "Blue" }      # Blue for ImageMagick
-        "Tesseract" { "Green" }       # Green for Tesseract
-        "PDFtk" { "DarkYellow" }      # Orange (DarkYellow) for PDFtk
-        default {
-            switch ($level) {
-                "Info" { "White" }     # Changed from Cyan to White
-                "Warning" { "Yellow" }
-                "Error" { "Red" }
-                default { "White" }
-            }
+    # Define color based on tool first, then level
+    $color = if ($tool -ne "None") {
+        switch ($tool) {
+            "ImageMagick" { "Blue" }
+            "Tesseract" { "Green" }
+            "PDFtk" { "DarkYellow" }
+            default { "White" }
+        }
+    } else {
+        switch ($level) {
+            "Info" { "White" }
+            "Warning" { "Yellow" }
+            "Error" { "Red" }
+            default { "White" }
         }
     }
     
@@ -148,16 +150,20 @@ $subfolders = Get-ChildItem -Path $rootFolder -Recurse -Directory | Where-Object
 
 Write-Log "Starting parallel file integrity verification phase..." "Info"
 
-# Verify all files in parallel
-$subfolders | ForEach-Object -ThrottleLimit $maxThreads -Parallel {
+# Get all image files first
+$allImageFiles = $subfolders | ForEach-Object {
+    Get-ChildItem -Path $_.FullName -File | 
+    Where-Object { $imageExtensions -contains $_.Extension.ToLower() }
+}
+
+# Process files in parallel batches
+$allImageFiles | ForEach-Object -ThrottleLimit $maxThreads -Parallel {
     # Import required variables from parent scope
-    $rootFolder = $using:rootFolder
-    $imageExtensions = $using:imageExtensions
     $imageMagickPath = $using:imageMagickPath
     $logFilePath = $using:logFilePath
     $corruptedFiles = $using:corruptedFiles
 
-    # Create local function copies
+    # Create local function copy
     function Write-Log {
         param (
             [string]$message,
@@ -173,20 +179,24 @@ $subfolders | ForEach-Object -ThrottleLimit $maxThreads -Parallel {
         finally {
             $mutex.ReleaseMutex()
         }
-        
-        $color = switch ($tool) {
-            "ImageMagick" { "Blue" }
-            "Tesseract" { "Green" }
-            "PDFtk" { "DarkYellow" }
-            default {
-                switch ($level) {
-                    "Info" { "White" }
-                    "Warning" { "Yellow" }
-                    "Error" { "Red" }
-                    default { "White" }
-                }
+
+        # Define color based on tool first, then level
+        $color = if ($tool -ne "None") {
+            switch ($tool) {
+                "ImageMagick" { "Blue" }
+                "Tesseract" { "Green" }
+                "PDFtk" { "DarkYellow" }
+                default { "White" }
+            }
+        } else {
+            switch ($level) {
+                "Info" { "White" }
+                "Warning" { "Yellow" }
+                "Error" { "Red" }
+                default { "White" }
             }
         }
+        
         Write-Host $logMessage -ForegroundColor $color
     }
 
@@ -200,16 +210,11 @@ $subfolders | ForEach-Object -ThrottleLimit $maxThreads -Parallel {
             return $false
         }
     }
-    
-    $imageFiles = Get-ChildItem -Path $_.FullName -File | 
-        Where-Object { $imageExtensions -contains $_.Extension.ToLower() }
-    
-    foreach ($imageFile in $imageFiles) {
-        Write-Log "Verifying file integrity: $($imageFile.Name)" "Info"
-        if (-not (Test-ImageFileIntegrity -imagePath $imageFile.FullName)) {
-            Write-Log "Corrupted file detected: $($imageFile.FullName)" "Error"
-            $corruptedFiles.Add($imageFile.FullName)
-        }
+
+    Write-Log "Verifying file integrity: $($_.Name)" "Info" "ImageMagick"
+    if (-not (Test-ImageFileIntegrity -imagePath $_.FullName)) {
+        Write-Log "Corrupted file detected: $($_.FullName)" "Error" "ImageMagick"
+        $corruptedFiles.Add($_.FullName)
     }
 }
 
@@ -232,6 +237,7 @@ $subfolders | ForEach-Object -ThrottleLimit $maxThreads -Parallel {
     $pdfTkPath = $using:pdfTkPath
     $imageExtensions = $using:imageExtensions
     $logFilePath = $using:logFilePath
+    $maxThreads = $using:maxThreads  # Import maxThreads here
     $subfolder = $_  # Current item from the pipeline
     $processedFiles = $using:processedFiles
     $successfulFiles = $using:successfulFiles
@@ -255,18 +261,20 @@ $subfolders | ForEach-Object -ThrottleLimit $maxThreads -Parallel {
             $mutex.ReleaseMutex()
         }
 
-        # Define color based on tool and level
-        $color = switch ($tool) {
-            "ImageMagick" { "Blue" }
-            "Tesseract" { "Green" }
-            "PDFtk" { "DarkYellow" }
-            default {
-                switch ($level) {
-                    "Info" { "White" }
-                    "Warning" { "Yellow" }
-                    "Error" { "Red" }
-                    default { "White" }
-                }
+        # Define color based on tool first, then level
+        $color = if ($tool -ne "None") {
+            switch ($tool) {
+                "ImageMagick" { "Blue" }
+                "Tesseract" { "Green" }
+                "PDFtk" { "DarkYellow" }
+                default { "White" }
+            }
+        } else {
+            switch ($level) {
+                "Info" { "White" }
+                "Warning" { "Yellow" }
+                "Error" { "Red" }
+                default { "White" }
             }
         }
         
@@ -317,105 +325,160 @@ $subfolders | ForEach-Object -ThrottleLimit $maxThreads -Parallel {
             $finalOutputPdf = Join-Path $outputPath "$($subfolder.Name).pdf"
             Write-Log "Will create PDF at: $finalOutputPdf"
             
-            # Stage 1: ImageMagick Processing with strict verification
-            Write-Log "Starting ImageMagick processing..."
-            $preprocessedFiles = @()
+            # Stage 1: ImageMagick Processing with parallel execution
+            Write-Log "Starting parallel ImageMagick processing..." "Info"
+            $preprocessedFiles = [System.Collections.Concurrent.ConcurrentBag[string]]::new()
+            
+            # Process images in parallel using Jobs instead of ForEach-Object -Parallel
+            $jobs = @()
             
             foreach ($imageFile in $imageFiles) {
-                $processedFiles.TryAdd($imageFile.FullName, 0)
-                $preprocessedImageFile = Join-Path $tempFolder "$($imageFile.BaseName)_preprocessed.tif"
-                Write-Log "Processing image: $($imageFile.Name)"
-                # ----------------------------------------------------------------------------------
-                # Process current image
-                # ----------------------------------------------------------------------------------
-                & $imageMagickPath -quiet $imageFile.FullName -deskew 40% $preprocessedImageFile
-                if ($LASTEXITCODE -eq 0) {
-                    Write-Log "Successfully processed: $($imageFile.Name)" "Info" "ImageMagick"
-                    $successfulFiles.TryAdd($imageFile.FullName, 0)
-                    if (Select-String -Path $logFilePath -Pattern "negative image positions unsupported" -Quiet) {
-                        Write-Log "Warning: TIFF negative image positions reported but file was successfully preprocessed" "Warning" "ImageMagick"
+                $job = Start-ThreadJob -ThrottleLimit $maxThreads -ScriptBlock {
+                    param($imageMagickPath, $imageFile, $tempFolder, $processedFiles, $successfulFiles, $failedFiles, $preprocessedFiles, $logFilePath)
+                    
+                    # Local function for logging
+                    function Write-Log {
+                        param($message, $level = "Info", $tool = "None")
+                        $logMessage = "$(Get-Date -Format 'yyyyMMdd_HHmmss') - [$level] $message"
+                        $mutex = [System.Threading.Mutex]::new($false, "LogFileMutex")
+                        try {
+                            $mutex.WaitOne() | Out-Null
+                            Add-Content -Path $logFilePath -Value $logMessage
+                        }
+                        finally {
+                            $mutex.ReleaseMutex()
+                        }
+
+                        # Define color based on tool first, then level
+                        $color = if ($tool -ne "None") {
+                            switch ($tool) {
+                                "ImageMagick" { "Blue" }
+                                "Tesseract" { "Green" }
+                                "PDFtk" { "DarkYellow" }
+                                default { "White" }
+                            }
+                        } else {
+                            switch ($level) {
+                                "Info" { "White" }
+                                "Warning" { "Yellow" }
+                                "Error" { "Red" }
+                                default { "White" }
+                            }
+                        }
+                        
+                        Write-Host $logMessage -ForegroundColor $color
                     }
-                } else {
-                    $failedFiles.TryAdd($imageFile.FullName, 0)
-                }
-                # ----------------------------------------------------------------------------------
-                
-                # Wait and verify this specific file is processed
-                $maxAttempts = 30
-                $attempt = 0
-                $fileProcessed = $false
-                
-                while (-not $fileProcessed -and $attempt -lt $maxAttempts) {
-                    $attempt++
-                    if (Test-Path $preprocessedImageFile) {
-                        $fileProcessed = $true
-                        $preprocessedFiles += $preprocessedImageFile
-                        Write-Log "Verified completion of: $($imageFile.Name)"
-                    } else {
-                        Write-Log "Waiting for ImageMagick to process $($imageFile.Name)... Attempt $attempt of $maxAttempts" "Info"
-                        Start-Sleep -Seconds 1
+
+                    $null = $processedFiles.TryAdd($imageFile.FullName, 0)
+                    $preprocessedImageFile = Join-Path $tempFolder "$($imageFile.BaseName)_preprocessed.tif"
+                    Write-Log "Processing image: $($imageFile.Name)" "Info" "ImageMagick"
+
+                    try {
+                        & $imageMagickPath -quiet $imageFile.FullName -deskew 40% $preprocessedImageFile
+                        if ($LASTEXITCODE -eq 0) {
+                            Write-Log "Successfully processed: $($imageFile.Name)" "Info" "ImageMagick"
+                            $null = $successfulFiles.TryAdd($imageFile.FullName, 0)
+                            $preprocessedFiles.Add($preprocessedImageFile)
+                        } else {
+                            Write-Log "Failed to process: $($imageFile.Name)" "Error" "ImageMagick"
+                            $null = $failedFiles.TryAdd($imageFile.FullName, 0)
+                        }
                     }
-                }
-                
-                if (-not $fileProcessed) {
-                    throw "ImageMagick processing timed out for file: $($imageFile.Name)"
-                }
-                
-                # Add small delay between files
-                Start-Sleep -Milliseconds 500
+                    catch {
+                        Write-Log "Error processing $($imageFile.Name): $_" "Error" "ImageMagick"
+                        $null = $failedFiles.TryAdd($imageFile.FullName, 0)
+                    }
+                } -ArgumentList $imageMagickPath, $imageFile, $tempFolder, $processedFiles, $successfulFiles, $failedFiles, $preprocessedFiles, $logFilePath
+
+                $jobs += $job
             }
 
-            Write-Log "All ImageMagick processing complete. Starting Tesseract OCR..."
+            # Wait for all jobs to complete
+            $jobs | Wait-Job | Receive-Job
+            $jobs | Remove-Job
+
+            Write-Log "All ImageMagick parallel processing complete. Starting Tesseract OCR..."
             
-            # Stage 2: Tesseract Processing with strict verification
-            $sortedPreprocessedFiles = $preprocessedFiles | Sort-Object
-            $pdfFiles = @()
-            $total = $sortedPreprocessedFiles.Count
-            $current = 0
-
+            # Get the sorted list of successfully preprocessed files
+            $sortedPreprocessedFiles = $preprocessedFiles.ToArray() | Sort-Object
+            $pdfFiles = [System.Collections.Concurrent.ConcurrentBag[string]]::new()
+            
+            # Process Tesseract in parallel using jobs
+            $tesseractJobs = @()
+            
             foreach ($preprocessedImageFile in $sortedPreprocessedFiles) {
-                $current++
-                $progress = [math]::Round(($current / $total) * 100, 2)
-                $baseName = [System.IO.Path]::GetFileNameWithoutExtension($preprocessedImageFile)
-                $tempPdfPath = Join-Path (Split-Path $preprocessedImageFile) $baseName
-                $expectedPdfFile = "$tempPdfPath.pdf"
+                $job = Start-ThreadJob -ThrottleLimit $maxThreads -ScriptBlock {
+                    param($tesseractPath, $preprocessedImageFile, $logFilePath)
+                    
+                    function Write-Log {
+                        param($message, $level = "Info", $tool = "Tesseract")
+                        $logMessage = "$(Get-Date -Format 'yyyyMMdd_HHmmss') - [$level] $message"
+                        $mutex = [System.Threading.Mutex]::new($false, "LogFileMutex")
+                        try {
+                            $mutex.WaitOne() | Out-Null
+                            Add-Content -Path $logFilePath -Value $logMessage
+                        }
+                        finally {
+                            $mutex.ReleaseMutex()
+                        }
 
-                Write-Log "[TESSERACT][$progress%] Running Tesseract on: $preprocessedImageFile" "Info" "Tesseract"
-                # ----------------------------------------------------------------------------------
-                # :: language with latest tessdata ::
-                # eng = english
-                # enm = english old
-                # fil = filipino
-                # combine with eng+enm+fil in parameters if needed
-                # ----------------------------------------------------------------------------------
-                & $tesseractPath $preprocessedImageFile $tempPdfPath -l eng --oem 1 --psm 3 pdf
-                # ----------------------------------------------------------------------------------
-                
-                # Wait and verify this specific PDF is generated
-                $maxAttempts = 30
-                $attempt = 0
-                $pdfGenerated = $false
-                
-                while (-not $pdfGenerated -and $attempt -lt $maxAttempts) {
-                    $attempt++
-                    if (Test-Path $expectedPdfFile) {
-                        $pdfGenerated = $true
-                        $pdfFiles += $expectedPdfFile
-                        Write-Log "Verified PDF generation for: $preprocessedImageFile"
-                        Remove-Item -Path $preprocessedImageFile -Force
-                    } else {
-                        Write-Log "Waiting for Tesseract to generate PDF... Attempt $attempt of $maxAttempts" "Info"
-                        Start-Sleep -Seconds 1
+                        # Define color based on tool first, then level
+                        $color = if ($tool -ne "None") {
+                            switch ($tool) {
+                                "ImageMagick" { "Blue" }
+                                "Tesseract" { "Green" }
+                                "PDFtk" { "DarkYellow" }
+                                default { "White" }
+                            }
+                        } else {
+                            switch ($level) {
+                                "Info" { "White" }
+                                "Warning" { "Yellow" }
+                                "Error" { "Red" }
+                                default { "White" }
+                            }
+                        }
+                        
+                        Write-Host $logMessage -ForegroundColor $color
                     }
-                }
-                
-                if (-not $pdfGenerated) {
-                    throw "Tesseract processing timed out for file: $preprocessedImageFile"
-                }
-                
-                # Add small delay between files
-                Start-Sleep -Milliseconds 500
+
+                    $baseName = [System.IO.Path]::GetFileNameWithoutExtension($preprocessedImageFile)
+                    $outputDir = Split-Path $preprocessedImageFile
+                    $tempPdfPath = Join-Path $outputDir $baseName
+                    $expectedPdfFile = "$tempPdfPath.pdf"
+
+                    Write-Log "Running Tesseract on: $preprocessedImageFile"
+                    
+                    & $tesseractPath $preprocessedImageFile $tempPdfPath -l eng --oem 1 --psm 3 pdf
+                    
+                    if ($LASTEXITCODE -eq 0 -and (Test-Path $expectedPdfFile)) {
+                        Write-Log "Successfully generated PDF: $expectedPdfFile"
+                        Remove-Item -Path $preprocessedImageFile -Force
+                        return $expectedPdfFile
+                    } else {
+                        Write-Log "Failed to generate PDF for: $preprocessedImageFile" "Error"
+                        return $null
+                    }
+                } -ArgumentList $tesseractPath, $preprocessedImageFile, $logFilePath
+
+                $tesseractJobs += $job
             }
+
+            # Wait for all Tesseract jobs to complete and collect results
+            $tesseractResults = $tesseractJobs | Wait-Job | Receive-Job
+            $tesseractJobs | Remove-Job
+
+            # Add successful results to pdfFiles
+            foreach ($result in $tesseractResults) {
+                if ($result) {
+                    $pdfFiles.Add($result)
+                }
+            }
+
+            Write-Log "All Tesseract parallel processing complete. Starting PDF merge..."
+            
+            # Convert ConcurrentBag to sorted array for PDFtk
+            $sortedPdfFiles = $pdfFiles.ToArray() | Sort-Object
 
             # Stage 3: PDFtk Processing
             Write-Log "Starting PDF merge..."
