@@ -20,6 +20,7 @@ jobs:
         run: |
           sudo apt-get install git-lfs
           git lfs install
+          
     # - name: Pull LFS files
     #   run: |
     #     git lfs pull
