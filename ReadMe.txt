@@ -1,41 +1,78 @@
-AUTOMATED OCR POWERSHELL SCRIPT MADE FOR DOE PROJECT AS ALTERNATIVE TO NAPS2 OCR
-★ FOR BATCH FOLDER OCR ONLY ★
+# Automated OCR PowerShell Script
 
-The "start_process.bat" will generate the needed folders as follows:
-Folder List:
-> input - [BATCH OCR ONLY] Where your folders with tif files that will be processed for OCR (folder with tif file would the name of the pdf)
-> archive - Where your folders in input folder will be moved after OCR
-> output - Where your processed OCR files in pdf format
-> logs - Where the logs are stored for the entire process
+**⚡ Alternative to NAPS2 OCR - Designed for Batch OCR Process**
 
----------------------------------------------------------------------
-The PowerShell script utilizes the following softwares and tessdata models for Tesseract-OCR:
+### 🚀 Batch Folder OCR Only
 
-ImageMagick (ImageMagick-7.1.1-43-Q16-HDRI-x64-dll.exe)
-https://imagemagick.org/script/download.php
+This PowerShell script automates OCR processing for batches of different image files, generating searchable PDFs.
 
-Tesseract-OCR (tesseract-ocr-w64-setup-5.5.0.20241111.exe)
-https://github.com/UB-Mannheim/tesseract/wiki
+---
+### Dependencies for MagickTess
 
-tessdata for Tesseract-OCR (eng.traineddata, enm.traineddata, fil.traineddata)
-https://github.com/tesseract-ocr/tessdata/tree/main
----------------------------------------------------------------------
-HOW TO SETUP:
-1.) Go to setup folder then run "setup.bat"
-3.) Start "start_process.bat" to setup folders then proceed to usage below.
----------------------------------------------------------------------
-How TO USE:
-> put the folders with tif files inside the "input" folder
-> just run "start_process.bat" then wait
-> processed pdf files with OCR will be generated to "output" folder
+The PowerShell script utilizes the following software and models for Tesseract-OCR:
 
-## DISREGARD EXPERIMENTAL ONLY 
-## > press "shift + right click" then click "Open powershell window here"
-## > type in powershell: ".\testra.ps1 input"
----------------------------------------------------------------------
-PDF Filename Convention:
+1. **[ImageMagick](https://imagemagick.org)**  
+   - Version: ImageMagick-7.1.1-43-Q16-HDRI-x64-dll.exe  
 
-Proper Folder Structure
+2. **[Tesseract-OCR](https://github.com/UB-Mannheim/tesseract/wiki)**  
+   - Version: tesseract-ocr-w64-setup-5.5.0.20241111.exe
+  
+3. **[PDFtk Server](https://www.pdflabs.com/tools/pdftk-server/)**
+   - Version: pdftk_server-2.02-win-setup.exe
+
+4. **[Tessdata](https://github.com/tesseract-ocr/tessdata/tree/main) for Tesseract-OCR**  
+   - Models: `eng.traineddata`, `enm.traineddata`, `fil.traineddata`
+   
+5. **[PowerShell 7](https://github.com/PowerShell/PowerShell) [For Multithreading Support]**
+   - Version: PowerShell-7.4.6-win-x64.msi
+  
+6. **[GhostScript](https://ghostscript.com/releases/gsdnld.html)**
+   - Version: gs10040w64.exe
+
+---
+### 📂 Folder Structure
+When executed, `start_process.bat` will create the following folders:
+
+- **input** – [Batch OCR Only] Place folders containing `.tif` files here. Each folder name becomes the resulting PDF name.
+- **archive** – Processed folders from `input` are moved here after OCR.
+- **output** – OCR-processed PDF files are saved here.
+- **logs** – All process logs are stored here.
+
+---
+## 🛠️ Setup & Installation Instructions
+
+1. Download and extract MagickTess zip file contents
+   - [MagickTess v1.0.0.0 Release](https://github.com/NeoMatrix14241/magicktess/releases/download/MagickTess-v1.0.0.0/MagickTess-v1.0.0.0.zip)
+
+2. Navigate to the `setup` folder and run "setup.bat".
+
+3. Copy `.traineddata` files from `setup/tessdata_best` to Tesseract's tessdata directory:
+   ```
+   Default Location: C:\Program Files\Tesseract-OCR\tessdata
+   ```
+4. Run `start_process.bat` to set up the necessary folders.
+
+---
+## ⚙️ Folder Structure & PDF Naming
+
+❌❌❌ **Avoid This Structure:**
+```
+input
+   ├── folder1
+   │    ├── image1.tif ★
+   │    ├── image2.tif ★
+   │    ├── subfolder1 <!>
+   │    │    ├── image1.tif
+   │    │    └── image2.tif
+   │    ├── subfolder2
+   │    │    ├── image1.tif
+   │    │    └── image2.tif
+```
+- **Issue:** Files at the root of `folder1` (★) will interrupt processing of subfolders (<!>).
+- **Solution:** Ensure `.tif` files are inside subfolders.
+
+✔️✔️✔️ **Proper Folder Structure:**
+```
 input
    ├── folder1
    │    ├── subfolder1 ★
@@ -47,49 +84,34 @@ input
    └── folder2 ★
         ├── image1.tif
         └── image2.tif
-THE ★ would be the name of the pdf files since it is where the tif files were found and will be treated as batch
+```
+- **PDF Name:** The folder marked with (★) becomes the PDF name.
+- **Example:** `subfolder1` generates `subfolder1.pdf`.
 
-Do **NOT**  do this folder structure:
-input
-   ├── folder1
-   │    ├── image1.tif ★
-   │    ├── image2.tif ★
-   │    ├── subfolder1 <!>
-   │    │    ├── image1.tif
-   │    │    └── image2.tif
-   │    ├── subfolder2
-   │    │    ├── image1.tif
-   │    │    └── image2.tif
-   └── folder2
-        ├── image1.tif
-        └── image2.tif
-The ★ would cause conflict since there is a subfolder (<!>) in the directory, what happens it it will stop the operation after the folder1 is done ocr, disregarding every sub folders with it.
+---
+## ▶️ Usage Instructions
 
+1. Place folders containing image files into the `input` directory.
+   ```
+   Supported Image Extensions/Types:
+   .bmp   .jpeg   .gif   .png
+   .dib   .jpe    .tif   .heic
+   .jpg   .jiff   .tiff
+   ```
+3. Run `start_process.bat` and wait for the process to complete.
+4. OCR-processed PDF files will be saved in the `output` directory.
 
-### PDF Filename Convention:
+---
+## 📄 PDF Naming Convention
 
-- The PDF filename corresponds directly to the folder name in which `.tif` files are found.
+- **folder1/subfolder1** → `subfolder1.pdf`
+- **folder1/subfolder2** → `subfolder2.pdf`
+- **folder2** → `folder2.pdf`
 
-    - If `.tif` files are found in **folder1**, the generated PDF is named **folder1.pdf**.
-    - If `.tif` files are found in **folder1/subfolder1**, the generated PDF is named **subfolder1.pdf**.
-    - Similarly, if `.tif` files are found in **folder1/subfolder2**, the generated PDF is named **subfolder2.pdf**.
-    - If `.tif` files are found in **folder2**, the generated PDF is named **folder2.pdf**.
-
-### Example Output:
-
-- **folder1.pdf** for `.tif` files directly inside **folder1**.
-- **subfolder1.pdf** for `.tif` files inside **folder1/subfolder1**.
-- **subfolder2.pdf** for `.tif` files inside **folder1/subfolder2**.
-- **folder2.pdf** for `.tif` files inside **folder2**.
----------------------------------------------------------------------
-Repository:
-https://github.com/tesseract-ocr/tesseract
----------------------------------------------------------------------
-Command Line Installer:
-> setup/tesseract-ocr-w64-setup-5.5.0.20241111.exe
-> setup/ImageMagick-7.1.1-41-Q16-HDRI-x64-dll
----------------------------------------------------------------------
-Note:
-> press "ctrl + c" in powershell to cancel
----------------------------------------------------------------------
-
+---
+## 🧪 Experimental (Optional)
+- Right-click in the `input` folder while holding **Shift** and select **Open PowerShell window here**.
+- Run the following command:
+   ```
+   .\magicktess.ps1 input
+   ```
