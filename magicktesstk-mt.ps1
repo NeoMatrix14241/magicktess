@@ -371,7 +371,17 @@ $subfolders | ForEach-Object -ThrottleLimit $maxThreads -Parallel {
                     Write-Log "Processing image: $($imageFile.Name)" "Info" "ImageMagick"
 
                     try {
-                        & $imageMagickPath -quiet $imageFile.FullName -deskew 40% $preprocessedImageFile
+						# ----------------------------------------------------------------------------------
+						# IMAGEMAGICK PREPROCESSING COMMAND LINE INTERFACE PARAMETERS
+						# :: DEFAULT :: 
+						# -deskew 40% (universal)
+						# -compress LZW (lossless)
+						# :: IF USING LOSSY COMPRESSION (JPEG)
+						# -compress JPEG
+						# -quality 75
+						# ----------------------------------------------------------------------------------
+                        & $imageMagickPath -quiet $imageFile.FullName -deskew 40% -compress LZW $preprocessedImageFile
+						# ----------------------------------------------------------------------------------
                         if ($LASTEXITCODE -eq 0) {
                             Write-Log "Successfully processed: $($imageFile.Name)" "Info" "ImageMagick"
                             $null = $successfulFiles.TryAdd($imageFile.FullName, 0)
@@ -456,9 +466,16 @@ $subfolders | ForEach-Object -ThrottleLimit $maxThreads -Parallel {
                     $expectedPdfFile = "$tempPdfPath.pdf"
 
                     Write-Log "Running Tesseract on: $preprocessedImageFile"
-                    
+                    # ----------------------------------------------------------------------------------
+					# TESSERACT-OCR COMMAND LINE INTERFACE PARAMETERS
+					# :: DEFAULT ::
+					# LANGUAGE: eng (ENGLISH)
+					# OCR ENGINE MODE (OEM): 1 (LSTM NEURAL NETWORK)
+					# PAGE SEGMENTATION MODE (PSM): 3 (DEFAULT)
+					# OUTPUT TYPE: pdf
+					# ----------------------------------------------------------------------------------
                     & $tesseractPath $preprocessedImageFile $tempPdfPath -l eng --oem 1 --psm 3 pdf
-                    
+                    # ----------------------------------------------------------------------------------
                     if ($LASTEXITCODE -eq 0 -and (Test-Path $expectedPdfFile)) {
                         Write-Log "Successfully generated PDF: $expectedPdfFile"
                         Remove-Item -Path $preprocessedImageFile -Force
