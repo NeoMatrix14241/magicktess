@@ -1,0 +1,38 @@
+# NAME: MagickTessTK
+# CURRENT VERSION: v1.0.0.0
+
+name: Generate ZIP File for Download
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install Git LFS
+        run: |
+          sudo apt-get install git-lfs
+          git lfs install
+
+      - name: Pull LFS files
+        run: |
+          git lfs pull
+
+      - name: Generate ZIP File for Download
+        run: |
+          zip -r MagickTessTK-v1.0.0.0.zip setup ReadMe.txt start_process.bat magicktesstk-st.ps1 magicktesstk-mt.ps1
+
+      - name: Upload ZIP to Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: MagickTessTK-v1.0.0.0.zip
+          tag_name: "MagickTessTK-v1.0.0.0"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
