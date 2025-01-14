@@ -52,7 +52,8 @@ function Write-Log {
             "PDFtk" { "DarkYellow" }
             default { "White" }
         }
-    } else {
+    }
+    else {
         switch ($level) {
             "Info" { "White" }
             "Warning" { "Yellow" }
@@ -144,7 +145,7 @@ Write-Log "Starting parallel file integrity verification phase..." "Info"
 
 # Get all image files first
 $allImageFiles = Get-ChildItem -Path $rootFolder -Recurse -File | 
-    Where-Object { $imageExtensions -contains $_.Extension.ToLower() }
+Where-Object { $imageExtensions -contains $_.Extension.ToLower() }
 
 # Process files in parallel using ForEach-Object -Parallel
 $allImageFiles | ForEach-Object -ThrottleLimit 500 -Parallel {
@@ -176,7 +177,8 @@ $allImageFiles | ForEach-Object -ThrottleLimit 500 -Parallel {
                 "PDFtk" { "DarkYellow" }
                 default { "White" }
             }
-        } else {
+        }
+        else {
             switch ($level) {
                 "Info" { "White" }
                 "Warning" { "Yellow" }
@@ -191,7 +193,7 @@ $allImageFiles | ForEach-Object -ThrottleLimit 500 -Parallel {
     # Verify file integrity
     Write-Log "Verifying file integrity: $($_.Name)" "Info" "ImageMagick"
     try {
-        $process = Start-Process -FilePath $imageMagickPath -ArgumentList "identify", "-quiet","`"$($_.FullName)`"" -Wait -NoNewWindow -PassThru
+        $process = Start-Process -FilePath $imageMagickPath -ArgumentList "identify", "-quiet", "`"$($_.FullName)`"" -Wait -NoNewWindow -PassThru
         if ($process.ExitCode -ne 0) {
             Write-Log "Corrupted file detected: $($_.FullName)" "Error" "ImageMagick"
             $corruptedFiles.Add($_.FullName)
@@ -210,9 +212,9 @@ if ($global:corruptedFiles.Count -gt 0) {
 }
 
 # Add thread-safe counters
-$global:processedFiles = [System.Collections.Concurrent.ConcurrentDictionary[string,byte]]::new()
-$global:successfulFiles = [System.Collections.Concurrent.ConcurrentDictionary[string,byte]]::new()
-$global:failedFiles = [System.Collections.Concurrent.ConcurrentDictionary[string,byte]]::new()
+$global:processedFiles = [System.Collections.Concurrent.ConcurrentDictionary[string, byte]]::new()
+$global:successfulFiles = [System.Collections.Concurrent.ConcurrentDictionary[string, byte]]::new()
+$global:failedFiles = [System.Collections.Concurrent.ConcurrentDictionary[string, byte]]::new()
 
 # Get all subfolders in the root folder excluding output folders
 $subfolders = Get-ChildItem -Path $rootFolder -Recurse -Directory | Where-Object { $_.FullName -notlike "*\output*" }
@@ -262,7 +264,8 @@ $subfolders | ForEach-Object -ThrottleLimit $maxThreads -Parallel {
                 "PDFtk" { "DarkYellow" }
                 default { "White" }
             }
-        } else {
+        }
+        else {
             switch ($level) {
                 "Info" { "White" }
                 "Warning" { "Yellow" }
@@ -354,7 +357,8 @@ $subfolders | ForEach-Object -ThrottleLimit $maxThreads -Parallel {
                                 "PDFtk" { "DarkYellow" }
                                 default { "White" }
                             }
-                        } else {
+                        }
+                        else {
                             switch ($level) {
                                 "Info" { "White" }
                                 "Warning" { "Yellow" }
@@ -371,22 +375,37 @@ $subfolders | ForEach-Object -ThrottleLimit $maxThreads -Parallel {
                     Write-Log "Processing image: $($imageFile.Name)" "Info" "ImageMagick"
 
                     try {
-						# ----------------------------------------------------------------------------------
-						# IMAGEMAGICK PREPROCESSING COMMAND LINE INTERFACE PARAMETERS
-						# :: DEFAULT :: 
-						# -deskew 40% (universal)
-						# -compress LZW (lossless)
-						# :: IF USING LOSSY COMPRESSION (JPEG)
-						# -compress JPEG
-						# -quality 75
-						# ----------------------------------------------------------------------------------
-                        & $imageMagickPath -quiet $imageFile.FullName -deskew 40% -compress LZW $preprocessedImageFile
-						# ----------------------------------------------------------------------------------
+                        # ----------------------------------------------------------------------------------
+                        # IMAGEMAGICK PREPROCESSING COMMAND LINE INTERFACE PARAMETERS
+                        # :: IF USING LOSSLESS COMPRESSION (LZW/PNG) ::
+                        # -compress LZW
+                        # :: IF USING LOSSY COMPRESSION (JPEG/WEBP) ::
+                        # -compress JPEG
+                        # -quality 75
+                        # :: DEFAULT ADDITIONAL PARAMETER ::
+                        # -deskew 40%
+                        # ----------------------------------------------------------------------------------
+                        # :: SET PARAMETERS HERE ::
+                        $CompressionType = "LZW" # Change to "JPEG" or "WEBP" for lossy compression
+                        $Quality = 75 # will be ignored if using lossless compression
+                        $AdditionalParam = "-deskew 40%" # Add any additional ImageMagick arguments here, e.g., "-resize 800x800 -sharpen 1"
+                        # ----------------------------------------------------------------------------------
+
+                        if ($CompressionType.ToUpper() -in @("JPEG", "WEBP")) {
+                            # Lossy compression
+                            & $imageMagickPath -quiet $imageFile.FullName -compress $CompressionType -quality $Quality $AdditionalParam $preprocessedImageFile
+                        }
+                        else {
+                            # Lossless compression
+                            & $imageMagickPath -quiet $imageFile.FullName -compress $CompressionType $AdditionalParam $preprocessedImageFile
+                        }
+
                         if ($LASTEXITCODE -eq 0) {
                             Write-Log "Successfully processed: $($imageFile.Name)" "Info" "ImageMagick"
                             $null = $successfulFiles.TryAdd($imageFile.FullName, 0)
                             $preprocessedFiles.Add($preprocessedImageFile)
-                        } else {
+                        }
+                        else {
                             Write-Log "Failed to process: $($imageFile.Name)" "Error" "ImageMagick"
                             $null = $failedFiles.TryAdd($imageFile.FullName, 0)
                         }
@@ -448,7 +467,8 @@ $subfolders | ForEach-Object -ThrottleLimit $maxThreads -Parallel {
                                 "PDFtk" { "DarkYellow" }
                                 default { "White" }
                             }
-                        } else {
+                        }
+                        else {
                             switch ($level) {
                                 "Info" { "White" }
                                 "Warning" { "Yellow" }
@@ -467,20 +487,27 @@ $subfolders | ForEach-Object -ThrottleLimit $maxThreads -Parallel {
 
                     Write-Log "Running Tesseract on: $preprocessedImageFile"
                     # ----------------------------------------------------------------------------------
-					# TESSERACT-OCR COMMAND LINE INTERFACE PARAMETERS
-					# :: DEFAULT ::
-					# LANGUAGE: eng (ENGLISH)
-					# OCR ENGINE MODE (OEM): 1 (LSTM NEURAL NETWORK)
-					# PAGE SEGMENTATION MODE (PSM): 3 (DEFAULT)
-					# OUTPUT TYPE: pdf
-					# ----------------------------------------------------------------------------------
-                    & $tesseractPath $preprocessedImageFile $tempPdfPath -l eng --oem 1 --psm 3 pdf
+                    # TESSERACT-OCR COMMAND LINE INTERFACE PARAMETERS
+                    # :: DEFAULT ::
+                    # LANGUAGE: eng (ENGLISH)
+                    # OCR ENGINE MODE (OEM): 1 (LSTM NEURAL NETWORK)
+                    # PAGE SEGMENTATION MODE (PSM): 3 (DEFAULT)
+                    # OUTPUT TYPE: pdf
+                    # ----------------------------------------------------------------------------------
+                    # :: SET PARAMETERS HERE ::
+                    $Language = "eng" # SET LANGUAGE
+                    $OCREngineMode = 1 # SET OEM
+                    $PageSegmentationMode = 3 # SET PSM
+                    $OutputType = "pdf" # SET OUTPUT TYPE
+                    # ----------------------------------------------------------------------------------
+                    & $tesseractPath $preprocessedImageFile $tempPdfPath -l $Language --oem $OCREngineMode --psm $PageSegmentationMode $OutputType
                     # ----------------------------------------------------------------------------------
                     if ($LASTEXITCODE -eq 0 -and (Test-Path $expectedPdfFile)) {
                         Write-Log "Successfully generated PDF: $expectedPdfFile"
                         Remove-Item -Path $preprocessedImageFile -Force
                         return $expectedPdfFile
-                    } else {
+                    }
+                    else {
                         Write-Log "Failed to generate PDF for: $preprocessedImageFile" "Error"
                         return $null
                     }
@@ -525,7 +552,8 @@ $subfolders | ForEach-Object -ThrottleLimit $maxThreads -Parallel {
 
             if ($sortedPdfFiles.Count -eq $imageFiles.Count) {
                 Write-Log "Verified all $($imageFiles.Count) images were converted to PDFs"
-            } else {
+            }
+            else {
                 throw "PDF count mismatch. Expected: $($imageFiles.Count), Found: $($sortedPdfFiles.Count)"
             }
 
@@ -539,7 +567,7 @@ $subfolders | ForEach-Object -ThrottleLimit $maxThreads -Parallel {
 
                     Write-Log "[PDFTK] Executing merge..." "Info" "PDFtk"
                     # ----------------------------------------------------------------------------------
-                    # Prepare PDFtk arguments
+                    # PDFtk Server Command Line Interface Parameters (DEFAULT DO NOT TOUCH)
                     # ----------------------------------------------------------------------------------
                     $pdfTkArgs = @($sortedPdfFiles | ForEach-Object { "`"$_`"" })
                     $pdfTkArgs += "cat", "output", "`"$finalOutputPdf`""
@@ -556,7 +584,8 @@ $subfolders | ForEach-Object -ThrottleLimit $maxThreads -Parallel {
                             Remove-Item -Path $_ -Force
                             Write-Log "Cleaned up temporary PDF: $_"
                         }
-                    } else {
+                    }
+                    else {
                         throw "PDFtk failed with exit code: $($process.ExitCode)"
                     }
                 }
@@ -564,7 +593,8 @@ $subfolders | ForEach-Object -ThrottleLimit $maxThreads -Parallel {
                     Write-Log "Error during PDF combination: $_" "Error"
                     throw
                 }
-            } else {
+            }
+            else {
                 throw "No PDF files found to merge"
             }
         }
@@ -601,10 +631,10 @@ Write-Log "Moving non-corrupted contents from input folder to archive folder..."
 try {
     # Only move original files (exclude any preprocessed files that might have leaked)
     $inputItems = Get-ChildItem -Path $rootFolder -Recurse | 
-                 Where-Object { 
-                     $_.Name -notlike "*_preprocessed*" -and 
-                     $_.FullName -notin $global:corruptedFiles 
-                 }
+    Where-Object { 
+        $_.Name -notlike "*_preprocessed*" -and 
+        $_.FullName -notin $global:corruptedFiles 
+    }
     
     foreach ($item in $inputItems) {
         $destinationPath = Join-Path $archiveFolder $item.FullName.Substring($rootFolder.Length).TrimStart('\')
