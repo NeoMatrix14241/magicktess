@@ -222,6 +222,38 @@ $subfolders = Get-ChildItem -Path $rootFolder -Recurse -Directory | Where-Object
 # Capture the start time for performance tracking
 $startTime = Get-Date
 
+# Function to read settings.INI file
+function Get-IniContent {
+    param (
+        [string]$FilePath
+    )
+    
+    $ini = @{}
+    switch -regex -file $FilePath {
+        "^\[(.+)\]" {
+            $section = $matches[1]
+            $ini[$section] = @{}
+        }
+        "(.+?)\s*=\s*(.*)" {
+            if ($section) {
+                $name, $value = $matches[1..2]
+                $ini[$section][$name] = $value.Trim()
+            }
+        }
+    }
+    return $ini
+}
+
+# Read settings from INI file
+$settingsPath = Join-Path $scriptDirectory "settings.ini"
+if (-not (Test-Path $settingsPath)) {
+    Write-Log "Settings file not found: $settingsPath" "Error"
+    exit
+}
+
+$settings = Get-IniContent $settingsPath
+Write-Log "Successfully loaded settings from: $settingsPath" "Info"
+
 # Process each subfolder in parallel
 $subfolders | ForEach-Object -ThrottleLimit $maxThreads -Parallel {
     # Get access to the using variables
@@ -237,6 +269,7 @@ $subfolders | ForEach-Object -ThrottleLimit $maxThreads -Parallel {
     $processedFiles = $using:processedFiles
     $successfulFiles = $using:successfulFiles
     $failedFiles = $using:failedFiles
+    $settings = $using:settings
 
     # Function to write messages to the log file and console
     function Write-Log {
@@ -334,7 +367,7 @@ $subfolders | ForEach-Object -ThrottleLimit $maxThreads -Parallel {
             
             foreach ($imageFile in $imageFiles) {
                 $job = Start-ThreadJob -ThrottleLimit $maxThreads -ScriptBlock {
-                    param($imageMagickPath, $imageFile, $tempFolder, $processedFiles, $successfulFiles, $failedFiles, $preprocessedFiles, $logFilePath)
+                    param($imageMagickPath, $imageFile, $tempFolder, $processedFiles, $successfulFiles, $failedFiles, $preprocessedFiles, $logFilePath, $settings)
                     
                     # Local function for logging
                     function Write-Log {
@@ -375,25 +408,12 @@ $subfolders | ForEach-Object -ThrottleLimit $maxThreads -Parallel {
                     Write-Log "Processing image: $($imageFile.Name)" "Info" "ImageMagick"
 
                     try {
-                        # ----------------------------------------------------------------------------------
-                        # IMAGEMAGICK PREPROCESSING COMMAND LINE INTERFACE PARAMETERS
-                        # :: IF USING LOSSLESS COMPRESSION (LZW/PNG) ::
-                        # -compress LZW
-                        # :: IF USING LOSSY COMPRESSION (JPEG/WEBP) ::
-                        # -compress JPEG
-                        # -quality 75
-                        # :: DEFAULT ADDITIONAL PARAMETER ::
-                        # - AdditionalParameters = "OFF"
-                        # ----------------------------------------------------------------------------------
-                        # :: SET PARAMETERS HERE ::
-                        $CompressionType = "LZW"
-                        $Quality = 75 # will be ignored if using lossless compression
-                        $AdditionalParameters = "ON" # ON/OFF - WILL ACTIVATE THE ADDITIONAL PARAMETERS BELOW
-                        # ----------------------------------------------------------------------------------
-                        # :: ADDITIONAL PARAMETERS ::
-                        $DeskewThreshold = "40%"
-                        $Colorspace = "Auto" # Auto, RGB, YCBCR, GRAY, sRGB, scRGB
-                        # ----------------------------------------------------------------------------------
+                        # Replace the hardcoded values with INI settings
+                        $CompressionType = $settings['ImageMagick']['CompressionType']
+                        $Quality = [int]$settings['ImageMagick']['Quality']
+                        $AdditionalParameters = $settings['ImageMagick']['AdditionalParameters']
+                        $DeskewThreshold = $settings['ImageMagick']['DeskewThreshold']
+                        $Colorspace = $settings['ImageMagick']['Colorspace']
 
                         # Get the color space of the image if set to Auto
                         if ($Colorspace.ToUpper() -eq "AUTO") {
@@ -480,45 +500,6 @@ $subfolders | ForEach-Object -ThrottleLimit $maxThreads -Parallel {
                                     default { & $imageMagickPath -quiet $imageFile.FullName -deskew $DeskewThreshold -compress $CompressionType $preprocessedImageFile }
                                 }
                             }
-                            else {
-                                # Lossless compression
-                                switch ($Colorspace.ToUpper()) {
-                                    "RGB" { & $imageMagickPath -quiet $imageFile.FullName -compress $CompressionType -colorspace RGB $preprocessedImageFile }
-                                    "CMYK" { & $imageMagickPath -quiet $imageFile.FullName -compress $CompressionType -colorspace CMYK $preprocessedImageFile }
-                                    "GRAY" { & $imageMagickPath -quiet $imageFile.FullName -compress $CompressionType -colorspace Gray $preprocessedImageFile }
-                                    "HCL" { & $imageMagickPath -quiet $imageFile.FullName -compress $CompressionType -colorspace HCL $preprocessedImageFile }
-                                    "HCLP" { & $imageMagickPath -quiet $imageFile.FullName -compress $CompressionType -colorspace HCLp $preprocessedImageFile }
-                                    "HSB" { & $imageMagickPath -quiet $imageFile.FullName -compress $CompressionType -colorspace HSB $preprocessedImageFile }
-                                    "HSI" { & $imageMagickPath -quiet $imageFile.FullName -compress $CompressionType -colorspace HSI $preprocessedImageFile }
-                                    "HSL" { & $imageMagickPath -quiet $imageFile.FullName -compress $CompressionType -colorspace HSL $preprocessedImageFile }
-                                    "HSV" { & $imageMagickPath -quiet $imageFile.FullName -compress $CompressionType -colorspace HSV $preprocessedImageFile }
-                                    "HWB" { & $imageMagickPath -quiet $imageFile.FullName -compress $CompressionType -colorspace HWB $preprocessedImageFile }
-                                    "Jzazbz" { & $imageMagickPath -quiet $imageFile.FullName -compress $CompressionType -colorspace Jzazbz $preprocessedImageFile }
-                                    "Lab" { & $imageMagickPath -quiet $imageFile.FullName -compress $CompressionType -colorspace Lab $preprocessedImageFile }
-                                    "LCHAB" { & $imageMagickPath -quiet $imageFile.FullName -compress $CompressionType -colorspace LCHab $preprocessedImageFile }
-                                    "LCHUV" { & $imageMagickPath -quiet $imageFile.FullName -compress $CompressionType -colorspace LCHuv $preprocessedImageFile }
-                                    "LMS" { & $imageMagickPath -quiet $imageFile.FullName -compress $CompressionType -colorspace LMS $preprocessedImageFile }
-                                    "Log" { & $imageMagickPath -quiet $imageFile.FullName -compress $CompressionType -colorspace Log $preprocessedImageFile }
-                                    "LUV" { & $imageMagickPath -quiet $imageFile.FullName -compress $CompressionType -colorspace Luv $preprocessedImageFile }
-                                    "OHTA" { & $imageMagickPath -quiet $imageFile.FullName -compress $CompressionType -colorspace OHTA $preprocessedImageFile }
-                                    "OKLAB" { & $imageMagickPath -quiet $imageFile.FullName -compress $CompressionType -colorspace OkLab $preprocessedImageFile }
-                                    "OKLCH" { & $imageMagickPath -quiet $imageFile.FullName -compress $CompressionType -colorspace OkLCH $preprocessedImageFile }
-                                    "Rec601YCbCr" { & $imageMagickPath -quiet $imageFile.FullName -compress $CompressionType -colorspace Rec601YCbCr $preprocessedImageFile }
-                                    "Rec709YCbCr" { & $imageMagickPath -quiet $imageFile.FullName -compress $CompressionType -colorspace Rec709YCbCr $preprocessedImageFile }
-                                    "scRGB" { & $imageMagickPath -quiet $imageFile.FullName -compress $CompressionType -colorspace scRGB $preprocessedImageFile }
-                                    "sRGB" { & $imageMagickPath -quiet $imageFile.FullName -compress $CompressionType -colorspace sRGB $preprocessedImageFile }
-                                    "Transparent" { & $imageMagickPath -quiet $imageFile.FullName -compress $CompressionType -colorspace Transparent $preprocessedImageFile }
-                                    "xyY" { & $imageMagickPath -quiet $imageFile.FullName -compress $CompressionType -colorspace xyY $preprocessedImageFile }
-                                    "XYZ" { & $imageMagickPath -quiet $imageFile.FullName -compress $CompressionType -colorspace XYZ $preprocessedImageFile }
-                                    "YCbCr" { & $imageMagickPath -quiet $imageFile.FullName -compress $CompressionType -colorspace YCbCr $preprocessedImageFile }
-                                    "YCC" { & $imageMagickPath -quiet $imageFile.FullName -compress $CompressionType -colorspace YCC $preprocessedImageFile }
-                                    "YDbDr" { & $imageMagickPath -quiet $imageFile.FullName -compress $CompressionType -colorspace YDbDr $preprocessedImageFile }
-                                    "YIQ" { & $imageMagickPath -quiet $imageFile.FullName -compress $CompressionType -colorspace YIQ $preprocessedImageFile }
-                                    "YPbPr" { & $imageMagickPath -quiet $imageFile.FullName -compress $CompressionType -colorspace YPbPr $preprocessedImageFile }
-                                    "YUV" { & $imageMagickPath -quiet $imageFile.FullName -compress $CompressionType -colorspace YUV $preprocessedImageFile }
-                                    default { & $imageMagickPath -quiet $imageFile.FullName -compress $CompressionType $preprocessedImageFile }
-                                }
-                            }
                         }
 
 
@@ -537,7 +518,7 @@ $subfolders | ForEach-Object -ThrottleLimit $maxThreads -Parallel {
                         Write-Log "Error processing $($imageFile.Name): $_" "Error" "ImageMagick"
                         $null = $failedFiles.TryAdd($imageFile.FullName, 0)
                     }
-                } -ArgumentList $imageMagickPath, $imageFile, $tempFolder, $processedFiles, $successfulFiles, $failedFiles, $preprocessedFiles, $logFilePath
+                } -ArgumentList $imageMagickPath, $imageFile, $tempFolder, $processedFiles, $successfulFiles, $failedFiles, $preprocessedFiles, $logFilePath, $settings
 
                 $jobs += $job
             }
@@ -568,7 +549,7 @@ $subfolders | ForEach-Object -ThrottleLimit $maxThreads -Parallel {
             
             foreach ($preprocessedImageFile in $sortedPreprocessedFiles) {
                 $job = Start-ThreadJob -ThrottleLimit $maxThreads -ScriptBlock {
-                    param($tesseractPath, $preprocessedImageFile, $logFilePath)
+                    param($tesseractPath, $preprocessedImageFile, $logFilePath, $settings)
                     
                     function Write-Log {
                         param($message, $level = "Info", $tool = "Tesseract")
@@ -609,20 +590,12 @@ $subfolders | ForEach-Object -ThrottleLimit $maxThreads -Parallel {
                     $expectedPdfFile = "$tempPdfPath.pdf"
 
                     Write-Log "Running Tesseract on: $preprocessedImageFile"
-                    # ----------------------------------------------------------------------------------
-                    # TESSERACT-OCR COMMAND LINE INTERFACE PARAMETERS
-                    # :: DEFAULT ::
-                    # LANGUAGE: eng (ENGLISH)
-                    # OCR ENGINE MODE (OEM): 1 (LSTM NEURAL NETWORK)
-                    # PAGE SEGMENTATION MODE (PSM): 3 (DEFAULT)
-                    # OUTPUT TYPE: pdf
-                    # ----------------------------------------------------------------------------------
-                    # :: SET PARAMETERS HERE ::
-                    $Language = "eng" # SET LANGUAGE
-                    $OCREngineMode = 1 # SET OEM
-                    $PageSegmentationMode = 3 # SET PSM
-                    $OutputType = "pdf" # SET OUTPUT TYPE
-                    # ----------------------------------------------------------------------------------
+                    # Replace the hardcoded Tesseract values with INI settings
+                    $Language = $settings['TesseractOCR']['Language']
+                    $OCREngineMode = [int]$settings['TesseractOCR']['OCREngineMode']
+                    $PageSegmentationMode = [int]$settings['TesseractOCR']['PageSegmentationMode']
+                    $OutputType = $settings['TesseractOCR']['OutputType']
+
                     & $tesseractPath $preprocessedImageFile $tempPdfPath -l $Language --oem $OCREngineMode --psm $PageSegmentationMode $OutputType
                     # ----------------------------------------------------------------------------------
                     if ($LASTEXITCODE -eq 0 -and (Test-Path $expectedPdfFile)) {
@@ -634,7 +607,7 @@ $subfolders | ForEach-Object -ThrottleLimit $maxThreads -Parallel {
                         Write-Log "Failed to generate PDF for: $preprocessedImageFile" "Error"
                         return $null
                     }
-                } -ArgumentList $tesseractPath, $preprocessedImageFile, $logFilePath
+                } -ArgumentList $tesseractPath, $preprocessedImageFile, $logFilePath, $settings
 
                 $tesseractJobs += $job
             }
