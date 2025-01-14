@@ -528,6 +528,7 @@ $subfolders | ForEach-Object -ThrottleLimit $maxThreads -Parallel {
                     $pdfTkArgs += "cat", "output", "`"$finalOutputPdf`""
                     Write-Host "`e[33m[PDFTK] Executing merge...`e[0m"
                     $process = Start-Process -FilePath $pdfTkPath -ArgumentList $pdfTkArgs -Wait -NoNewWindow -PassThru
+                    Write-Host "`e[33m[PDFTK] Merging Succsessful: $finalOutputPdf`e[0m"
                     # ----------------------------------------------------------------------------------
 
                     if ($process.ExitCode -eq 0 -and (Test-Path $finalOutputPdf)) {
