@@ -383,7 +383,7 @@ $subfolders | ForEach-Object -ThrottleLimit $maxThreads -Parallel {
                         # -compress JPEG
                         # -quality 75
                         # :: DEFAULT ADDITIONAL PARAMETER ::
-                        # -deskew 40%
+                        # - AdditionalParameters = "OFF"
                         # ----------------------------------------------------------------------------------
                         # :: SET PARAMETERS HERE ::
                         $CompressionType = "LZW"
@@ -392,27 +392,136 @@ $subfolders | ForEach-Object -ThrottleLimit $maxThreads -Parallel {
                         # ----------------------------------------------------------------------------------
                         # :: ADDITIONAL PARAMETERS ::
                         $DeskewThreshold = "40%"
+                        $Colorspace = "Auto" # Auto, RGB, YCBCR, GRAY, sRGB, scRGB
                         # ----------------------------------------------------------------------------------
+
+                        # Get the color space of the image if set to Auto
+                        if ($Colorspace.ToUpper() -eq "AUTO") {
+                            $Colorspace = & $imageMagickPath identify -format "%[colorspace]" $imageFile.FullName
+                            Write-Host "Detected Colorspace: $Colorspace"  # You can remove or keep this for debugging
+                        }
+
                         if ($AdditionalParameters.ToUpper() -eq "ON") {
                             if ($CompressionType.ToUpper() -in @("JPEG", "WEBP")) {
                                 # Lossy compression
-                                & $imageMagickPath -quiet $imageFile.FullName -deskew $DeskewThreshold -compress $CompressionType -quality $Quality $preprocessedImageFile
+                                switch ($Colorspace.ToUpper()) {
+                                    "RGB" { & $imageMagickPath -quiet $imageFile.FullName -deskew $DeskewThreshold -compress $CompressionType -quality $Quality -colorspace RGB $preprocessedImageFile }
+                                    "CMYK" { & $imageMagickPath -quiet $imageFile.FullName -deskew $DeskewThreshold -compress $CompressionType -quality $Quality -colorspace CMYK $preprocessedImageFile }
+                                    "GRAY" { & $imageMagickPath -quiet $imageFile.FullName -deskew $DeskewThreshold -compress $CompressionType -quality $Quality -colorspace Gray $preprocessedImageFile }
+                                    "HCL" { & $imageMagickPath -quiet $imageFile.FullName -deskew $DeskewThreshold -compress $CompressionType -quality $Quality -colorspace HCL $preprocessedImageFile }
+                                    "HCLP" { & $imageMagickPath -quiet $imageFile.FullName -deskew $DeskewThreshold -compress $CompressionType -quality $Quality -colorspace HCLp $preprocessedImageFile }
+                                    "HSB" { & $imageMagickPath -quiet $imageFile.FullName -deskew $DeskewThreshold -compress $CompressionType -quality $Quality -colorspace HSB $preprocessedImageFile }
+                                    "HSI" { & $imageMagickPath -quiet $imageFile.FullName -deskew $DeskewThreshold -compress $CompressionType -quality $Quality -colorspace HSI $preprocessedImageFile }
+                                    "HSL" { & $imageMagickPath -quiet $imageFile.FullName -deskew $DeskewThreshold -compress $CompressionType -quality $Quality -colorspace HSL $preprocessedImageFile }
+                                    "HSV" { & $imageMagickPath -quiet $imageFile.FullName -deskew $DeskewThreshold -compress $CompressionType -quality $Quality -colorspace HSV $preprocessedImageFile }
+                                    "HWB" { & $imageMagickPath -quiet $imageFile.FullName -deskew $DeskewThreshold -compress $CompressionType -quality $Quality -colorspace HWB $preprocessedImageFile }
+                                    "Jzazbz" { & $imageMagickPath -quiet $imageFile.FullName -deskew $DeskewThreshold -compress $CompressionType -quality $Quality -colorspace Jzazbz $preprocessedImageFile }
+                                    "Lab" { & $imageMagickPath -quiet $imageFile.FullName -deskew $DeskewThreshold -compress $CompressionType -quality $Quality -colorspace Lab $preprocessedImageFile }
+                                    "LCHAB" { & $imageMagickPath -quiet $imageFile.FullName -deskew $DeskewThreshold -compress $CompressionType -quality $Quality -colorspace LCHab $preprocessedImageFile }
+                                    "LCHUV" { & $imageMagickPath -quiet $imageFile.FullName -deskew $DeskewThreshold -compress $CompressionType -quality $Quality -colorspace LCHuv $preprocessedImageFile }
+                                    "LMS" { & $imageMagickPath -quiet $imageFile.FullName -deskew $DeskewThreshold -compress $CompressionType -quality $Quality -colorspace LMS $preprocessedImageFile }
+                                    "Log" { & $imageMagickPath -quiet $imageFile.FullName -deskew $DeskewThreshold -compress $CompressionType -quality $Quality -colorspace Log $preprocessedImageFile }
+                                    "LUV" { & $imageMagickPath -quiet $imageFile.FullName -deskew $DeskewThreshold -compress $CompressionType -quality $Quality -colorspace Luv $preprocessedImageFile }
+                                    "OHTA" { & $imageMagickPath -quiet $imageFile.FullName -deskew $DeskewThreshold -compress $CompressionType -quality $Quality -colorspace OHTA $preprocessedImageFile }
+                                    "OKLAB" { & $imageMagickPath -quiet $imageFile.FullName -deskew $DeskewThreshold -compress $CompressionType -quality $Quality -colorspace OkLab $preprocessedImageFile }
+                                    "OKLCH" { & $imageMagickPath -quiet $imageFile.FullName -deskew $DeskewThreshold -compress $CompressionType -quality $Quality -colorspace OkLCH $preprocessedImageFile }
+                                    "Rec601YCbCr" { & $imageMagickPath -quiet $imageFile.FullName -deskew $DeskewThreshold -compress $CompressionType -quality $Quality -colorspace Rec601YCbCr $preprocessedImageFile }
+                                    "Rec709YCbCr" { & $imageMagickPath -quiet $imageFile.FullName -deskew $DeskewThreshold -compress $CompressionType -quality $Quality -colorspace Rec709YCbCr $preprocessedImageFile }
+                                    "scRGB" { & $imageMagickPath -quiet $imageFile.FullName -deskew $DeskewThreshold -compress $CompressionType -quality $Quality -colorspace scRGB $preprocessedImageFile }
+                                    "sRGB" { & $imageMagickPath -quiet $imageFile.FullName -deskew $DeskewThreshold -compress $CompressionType -quality $Quality -colorspace sRGB $preprocessedImageFile }
+                                    "Transparent" { & $imageMagickPath -quiet $imageFile.FullName -deskew $DeskewThreshold -compress $CompressionType -quality $Quality -colorspace Transparent $preprocessedImageFile }
+                                    "xyY" { & $imageMagickPath -quiet $imageFile.FullName -deskew $DeskewThreshold -compress $CompressionType -quality $Quality -colorspace xyY $preprocessedImageFile }
+                                    "XYZ" { & $imageMagickPath -quiet $imageFile.FullName -deskew $DeskewThreshold -compress $CompressionType -quality $Quality -colorspace XYZ $preprocessedImageFile }
+                                    "YCbCr" { & $imageMagickPath -quiet $imageFile.FullName -deskew $DeskewThreshold -compress $CompressionType -quality $Quality -colorspace YCbCr $preprocessedImageFile }
+                                    "YCC" { & $imageMagickPath -quiet $imageFile.FullName -deskew $DeskewThreshold -compress $CompressionType -quality $Quality -colorspace YCC $preprocessedImageFile }
+                                    "YDbDr" { & $imageMagickPath -quiet $imageFile.FullName -deskew $DeskewThreshold -compress $CompressionType -quality $Quality -colorspace YDbDr $preprocessedImageFile }
+                                    "YIQ" { & $imageMagickPath -quiet $imageFile.FullName -deskew $DeskewThreshold -compress $CompressionType -quality $Quality -colorspace YIQ $preprocessedImageFile }
+                                    "YPbPr" { & $imageMagickPath -quiet $imageFile.FullName -deskew $DeskewThreshold -compress $CompressionType -quality $Quality -colorspace YPbPr $preprocessedImageFile }
+                                    "YUV" { & $imageMagickPath -quiet $imageFile.FullName -deskew $DeskewThreshold -compress $CompressionType -quality $Quality -colorspace YUV $preprocessedImageFile }
+                                    default { & $imageMagickPath -quiet $imageFile.FullName -deskew $DeskewThreshold -compress $CompressionType -quality $Quality $preprocessedImageFile }
+                                }
                             }
                             else {
                                 # Lossless compression
-                                & $imageMagickPath -quiet $imageFile.FullName -deskew $DeskewThreshold -compress $CompressionType $preprocessedImageFile
-                            }
-                        }
-                        else {
-                            if ($CompressionType.ToUpper() -in @("JPEG", "WEBP")) {
-                                # Lossy compression
-                                & $imageMagickPath -quiet $imageFile.FullName -compress $CompressionType -quality $Quality $preprocessedImageFile
+                                switch ($Colorspace.ToUpper()) {
+                                    "RGB" { & $imageMagickPath -quiet $imageFile.FullName -deskew $DeskewThreshold -compress $CompressionType -colorspace RGB $preprocessedImageFile }
+                                    "CMYK" { & $imageMagickPath -quiet $imageFile.FullName -deskew $DeskewThreshold -compress $CompressionType -colorspace CMYK $preprocessedImageFile }
+                                    "GRAY" { & $imageMagickPath -quiet $imageFile.FullName -deskew $DeskewThreshold -compress $CompressionType -colorspace Gray $preprocessedImageFile }
+                                    "HCL" { & $imageMagickPath -quiet $imageFile.FullName -deskew $DeskewThreshold -compress $CompressionType -colorspace HCL $preprocessedImageFile }
+                                    "HCLP" { & $imageMagickPath -quiet $imageFile.FullName -deskew $DeskewThreshold -compress $CompressionType -colorspace HCLp $preprocessedImageFile }
+                                    "HSB" { & $imageMagickPath -quiet $imageFile.FullName -deskew $DeskewThreshold -compress $CompressionType -colorspace HSB $preprocessedImageFile }
+                                    "HSI" { & $imageMagickPath -quiet $imageFile.FullName -deskew $DeskewThreshold -compress $CompressionType -colorspace HSI $preprocessedImageFile }
+                                    "HSL" { & $imageMagickPath -quiet $imageFile.FullName -deskew $DeskewThreshold -compress $CompressionType -colorspace HSL $preprocessedImageFile }
+                                    "HSV" { & $imageMagickPath -quiet $imageFile.FullName -deskew $DeskewThreshold -compress $CompressionType -colorspace HSV $preprocessedImageFile }
+                                    "HWB" { & $imageMagickPath -quiet $imageFile.FullName -deskew $DeskewThreshold -compress $CompressionType -colorspace HWB $preprocessedImageFile }
+                                    "Jzazbz" { & $imageMagickPath -quiet $imageFile.FullName -deskew $DeskewThreshold -compress $CompressionType -colorspace Jzazbz $preprocessedImageFile }
+                                    "Lab" { & $imageMagickPath -quiet $imageFile.FullName -deskew $DeskewThreshold -compress $CompressionType -colorspace Lab $preprocessedImageFile }
+                                    "LCHAB" { & $imageMagickPath -quiet $imageFile.FullName -deskew $DeskewThreshold -compress $CompressionType -colorspace LCHab $preprocessedImageFile }
+                                    "LCHUV" { & $imageMagickPath -quiet $imageFile.FullName -deskew $DeskewThreshold -compress $CompressionType -colorspace LCHuv $preprocessedImageFile }
+                                    "LMS" { & $imageMagickPath -quiet $imageFile.FullName -deskew $DeskewThreshold -compress $CompressionType -colorspace LMS $preprocessedImageFile }
+                                    "Log" { & $imageMagickPath -quiet $imageFile.FullName -deskew $DeskewThreshold -compress $CompressionType -colorspace Log $preprocessedImageFile }
+                                    "LUV" { & $imageMagickPath -quiet $imageFile.FullName -deskew $DeskewThreshold -compress $CompressionType -colorspace Luv $preprocessedImageFile }
+                                    "OHTA" { & $imageMagickPath -quiet $imageFile.FullName -deskew $DeskewThreshold -compress $CompressionType -colorspace OHTA $preprocessedImageFile }
+                                    "OKLAB" { & $imageMagickPath -quiet $imageFile.FullName -deskew $DeskewThreshold -compress $CompressionType -colorspace OkLab $preprocessedImageFile }
+                                    "OKLCH" { & $imageMagickPath -quiet $imageFile.FullName -deskew $DeskewThreshold -compress $CompressionType -colorspace OkLCH $preprocessedImageFile }
+                                    "Rec601YCbCr" { & $imageMagickPath -quiet $imageFile.FullName -deskew $DeskewThreshold -compress $CompressionType -colorspace Rec601YCbCr $preprocessedImageFile }
+                                    "Rec709YCbCr" { & $imageMagickPath -quiet $imageFile.FullName -deskew $DeskewThreshold -compress $CompressionType -colorspace Rec709YCbCr $preprocessedImageFile }
+                                    "scRGB" { & $imageMagickPath -quiet $imageFile.FullName -deskew $DeskewThreshold -compress $CompressionType -colorspace scRGB $preprocessedImageFile }
+                                    "sRGB" { & $imageMagickPath -quiet $imageFile.FullName -deskew $DeskewThreshold -compress $CompressionType -colorspace sRGB $preprocessedImageFile }
+                                    "Transparent" { & $imageMagickPath -quiet $imageFile.FullName -deskew $DeskewThreshold -compress $CompressionType -colorspace Transparent $preprocessedImageFile }
+                                    "xyY" { & $imageMagickPath -quiet $imageFile.FullName -deskew $DeskewThreshold -compress $CompressionType -colorspace xyY $preprocessedImageFile }
+                                    "XYZ" { & $imageMagickPath -quiet $imageFile.FullName -deskew $DeskewThreshold -compress $CompressionType -colorspace XYZ $preprocessedImageFile }
+                                    "YCbCr" { & $imageMagickPath -quiet $imageFile.FullName -deskew $DeskewThreshold -compress $CompressionType -colorspace YCbCr $preprocessedImageFile }
+                                    "YCC" { & $imageMagickPath -quiet $imageFile.FullName -deskew $DeskewThreshold -compress $CompressionType -colorspace YCC $preprocessedImageFile }
+                                    "YDbDr" { & $imageMagickPath -quiet $imageFile.FullName -deskew $DeskewThreshold -compress $CompressionType -colorspace YDbDr $preprocessedImageFile }
+                                    "YIQ" { & $imageMagickPath -quiet $imageFile.FullName -deskew $DeskewThreshold -compress $CompressionType -colorspace YIQ $preprocessedImageFile }
+                                    "YPbPr" { & $imageMagickPath -quiet $imageFile.FullName -deskew $DeskewThreshold -compress $CompressionType -colorspace YPbPr $preprocessedImageFile }
+                                    "YUV" { & $imageMagickPath -quiet $imageFile.FullName -deskew $DeskewThreshold -compress $CompressionType -colorspace YUV $preprocessedImageFile }
+                                    default { & $imageMagickPath -quiet $imageFile.FullName -deskew $DeskewThreshold -compress $CompressionType $preprocessedImageFile }
+                                }
                             }
                             else {
                                 # Lossless compression
-                                & $imageMagickPath -quiet $imageFile.FullName -compress $CompressionType $preprocessedImageFile
+                                switch ($Colorspace.ToUpper()) {
+                                    "RGB" { & $imageMagickPath -quiet $imageFile.FullName -compress $CompressionType -colorspace RGB $preprocessedImageFile }
+                                    "CMYK" { & $imageMagickPath -quiet $imageFile.FullName -compress $CompressionType -colorspace CMYK $preprocessedImageFile }
+                                    "GRAY" { & $imageMagickPath -quiet $imageFile.FullName -compress $CompressionType -colorspace Gray $preprocessedImageFile }
+                                    "HCL" { & $imageMagickPath -quiet $imageFile.FullName -compress $CompressionType -colorspace HCL $preprocessedImageFile }
+                                    "HCLP" { & $imageMagickPath -quiet $imageFile.FullName -compress $CompressionType -colorspace HCLp $preprocessedImageFile }
+                                    "HSB" { & $imageMagickPath -quiet $imageFile.FullName -compress $CompressionType -colorspace HSB $preprocessedImageFile }
+                                    "HSI" { & $imageMagickPath -quiet $imageFile.FullName -compress $CompressionType -colorspace HSI $preprocessedImageFile }
+                                    "HSL" { & $imageMagickPath -quiet $imageFile.FullName -compress $CompressionType -colorspace HSL $preprocessedImageFile }
+                                    "HSV" { & $imageMagickPath -quiet $imageFile.FullName -compress $CompressionType -colorspace HSV $preprocessedImageFile }
+                                    "HWB" { & $imageMagickPath -quiet $imageFile.FullName -compress $CompressionType -colorspace HWB $preprocessedImageFile }
+                                    "Jzazbz" { & $imageMagickPath -quiet $imageFile.FullName -compress $CompressionType -colorspace Jzazbz $preprocessedImageFile }
+                                    "Lab" { & $imageMagickPath -quiet $imageFile.FullName -compress $CompressionType -colorspace Lab $preprocessedImageFile }
+                                    "LCHAB" { & $imageMagickPath -quiet $imageFile.FullName -compress $CompressionType -colorspace LCHab $preprocessedImageFile }
+                                    "LCHUV" { & $imageMagickPath -quiet $imageFile.FullName -compress $CompressionType -colorspace LCHuv $preprocessedImageFile }
+                                    "LMS" { & $imageMagickPath -quiet $imageFile.FullName -compress $CompressionType -colorspace LMS $preprocessedImageFile }
+                                    "Log" { & $imageMagickPath -quiet $imageFile.FullName -compress $CompressionType -colorspace Log $preprocessedImageFile }
+                                    "LUV" { & $imageMagickPath -quiet $imageFile.FullName -compress $CompressionType -colorspace Luv $preprocessedImageFile }
+                                    "OHTA" { & $imageMagickPath -quiet $imageFile.FullName -compress $CompressionType -colorspace OHTA $preprocessedImageFile }
+                                    "OKLAB" { & $imageMagickPath -quiet $imageFile.FullName -compress $CompressionType -colorspace OkLab $preprocessedImageFile }
+                                    "OKLCH" { & $imageMagickPath -quiet $imageFile.FullName -compress $CompressionType -colorspace OkLCH $preprocessedImageFile }
+                                    "Rec601YCbCr" { & $imageMagickPath -quiet $imageFile.FullName -compress $CompressionType -colorspace Rec601YCbCr $preprocessedImageFile }
+                                    "Rec709YCbCr" { & $imageMagickPath -quiet $imageFile.FullName -compress $CompressionType -colorspace Rec709YCbCr $preprocessedImageFile }
+                                    "scRGB" { & $imageMagickPath -quiet $imageFile.FullName -compress $CompressionType -colorspace scRGB $preprocessedImageFile }
+                                    "sRGB" { & $imageMagickPath -quiet $imageFile.FullName -compress $CompressionType -colorspace sRGB $preprocessedImageFile }
+                                    "Transparent" { & $imageMagickPath -quiet $imageFile.FullName -compress $CompressionType -colorspace Transparent $preprocessedImageFile }
+                                    "xyY" { & $imageMagickPath -quiet $imageFile.FullName -compress $CompressionType -colorspace xyY $preprocessedImageFile }
+                                    "XYZ" { & $imageMagickPath -quiet $imageFile.FullName -compress $CompressionType -colorspace XYZ $preprocessedImageFile }
+                                    "YCbCr" { & $imageMagickPath -quiet $imageFile.FullName -compress $CompressionType -colorspace YCbCr $preprocessedImageFile }
+                                    "YCC" { & $imageMagickPath -quiet $imageFile.FullName -compress $CompressionType -colorspace YCC $preprocessedImageFile }
+                                    "YDbDr" { & $imageMagickPath -quiet $imageFile.FullName -compress $CompressionType -colorspace YDbDr $preprocessedImageFile }
+                                    "YIQ" { & $imageMagickPath -quiet $imageFile.FullName -compress $CompressionType -colorspace YIQ $preprocessedImageFile }
+                                    "YPbPr" { & $imageMagickPath -quiet $imageFile.FullName -compress $CompressionType -colorspace YPbPr $preprocessedImageFile }
+                                    "YUV" { & $imageMagickPath -quiet $imageFile.FullName -compress $CompressionType -colorspace YUV $preprocessedImageFile }
+                                    default { & $imageMagickPath -quiet $imageFile.FullName -compress $CompressionType $preprocessedImageFile }
+                                }
                             }
                         }
+
+
 
                         if ($LASTEXITCODE -eq 0) {
                             Write-Log "Successfully processed: $($imageFile.Name)" "Info" "ImageMagick"
