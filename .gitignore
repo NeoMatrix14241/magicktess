@@ -10,4 +10,5 @@
 !magicktesstk-st.ps1
 !setup/
 !setup/**/*
-!start_processbat
+!start_process.bat
+!ReadMe.txt
