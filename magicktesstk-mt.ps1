@@ -386,18 +386,32 @@ $subfolders | ForEach-Object -ThrottleLimit $maxThreads -Parallel {
                         # -deskew 40%
                         # ----------------------------------------------------------------------------------
                         # :: SET PARAMETERS HERE ::
-                        $CompressionType = "LZW" # Change to "JPEG" or "WEBP" for lossy compression
+                        $CompressionType = "LZW"
                         $Quality = 75 # will be ignored if using lossless compression
-                        $AdditionalParam = "-deskew 40%" # Add any additional ImageMagick arguments here, e.g., "-resize 800x800 -sharpen 1"
+                        $AdditionalParameters = "ON" # ON/OFF - WILL ACTIVATE THE ADDITIONAL PARAMETERS BELOW
                         # ----------------------------------------------------------------------------------
-
-                        if ($CompressionType.ToUpper() -in @("JPEG", "WEBP")) {
-                            # Lossy compression
-                            & $imageMagickPath -quiet $imageFile.FullName -compress $CompressionType -quality $Quality $AdditionalParam $preprocessedImageFile
+                        # :: ADDITIONAL PARAMETERS ::
+                        $DeskewThreshold = "40%"
+                        # ----------------------------------------------------------------------------------
+                        if ($AdditionalParameters.ToUpper() -eq "ON") {
+                            if ($CompressionType.ToUpper() -in @("JPEG", "WEBP")) {
+                                # Lossy compression
+                                & $imageMagickPath -quiet $imageFile.FullName -deskew $DeskewThreshold -compress $CompressionType -quality $Quality $preprocessedImageFile
+                            }
+                            else {
+                                # Lossless compression
+                                & $imageMagickPath -quiet $imageFile.FullName -deskew $DeskewThreshold -compress $CompressionType $preprocessedImageFile
+                            }
                         }
                         else {
-                            # Lossless compression
-                            & $imageMagickPath -quiet $imageFile.FullName -compress $CompressionType $AdditionalParam $preprocessedImageFile
+                            if ($CompressionType.ToUpper() -in @("JPEG", "WEBP")) {
+                                # Lossy compression
+                                & $imageMagickPath -quiet $imageFile.FullName -compress $CompressionType -quality $Quality $preprocessedImageFile
+                            }
+                            else {
+                                # Lossless compression
+                                & $imageMagickPath -quiet $imageFile.FullName -compress $CompressionType $preprocessedImageFile
+                            }
                         }
 
                         if ($LASTEXITCODE -eq 0) {
@@ -538,64 +552,85 @@ $subfolders | ForEach-Object -ThrottleLimit $maxThreads -Parallel {
             # Convert ConcurrentBag to sorted array for PDFtk
             $sortedPdfFiles = $pdfFiles.ToArray() | Sort-Object
 
-            # Stage 3: PDFtk Processing
-            Write-Log "Starting PDF merge..."
+            # Stage 3: PDFtk Processing - Modified for chunk processing
+            Write-Log "Starting PDF merge with chunk processing..." "Info" "PDFtk"
             $sortedPdfFiles = $pdfFiles | Where-Object { Test-Path $_ } | Sort-Object
 
-            # Add verification of all PDFs before merging
+            # Verification checks
             $missingFiles = $pdfFiles | Where-Object { -not (Test-Path $_) }
             if ($missingFiles.Count -gt 0) {
-                Write-Log "Missing PDF files detected:" "Error"
-                $missingFiles | ForEach-Object { Write-Log "Missing: $_" "Error" }
+                Write-Log "Missing PDF files detected:" "Error" "PDFtk"
+                $missingFiles | ForEach-Object { Write-Log "Missing: $_" "Error" "PDFtk" }
                 throw "Cannot proceed with merge - missing PDF files"
-            }
-
-            if ($sortedPdfFiles.Count -eq $imageFiles.Count) {
-                Write-Log "Verified all $($imageFiles.Count) images were converted to PDFs"
-            }
-            else {
-                throw "PDF count mismatch. Expected: $($imageFiles.Count), Found: $($sortedPdfFiles.Count)"
             }
 
             if ($sortedPdfFiles.Count -gt 0) {
                 try {
-                    # Create output directory if needed
-                    $finalOutputDir = Split-Path -Parent $finalOutputPdf
-                    if (-not (Test-Path $finalOutputDir)) {
-                        New-Item -ItemType Directory -Path $finalOutputDir -Force | Out-Null
-                    }
-
-                    Write-Log "[PDFTK] Executing merge..." "Info" "PDFtk"
-                    # ----------------------------------------------------------------------------------
-                    # PDFtk Server Command Line Interface Parameters (DEFAULT DO NOT TOUCH)
-                    # ----------------------------------------------------------------------------------
-                    $pdfTkArgs = @($sortedPdfFiles | ForEach-Object { "`"$_`"" })
-                    $pdfTkArgs += "cat", "output", "`"$finalOutputPdf`""
-                    Write-Host "`e[33m[PDFTK] Executing merge...`e[0m"
-                    $process = Start-Process -FilePath $pdfTkPath -ArgumentList $pdfTkArgs -Wait -NoNewWindow -PassThru
-                    Write-Host "`e[33m[PDFTK] Merging Succsessful: $finalOutputPdf`e[0m"
-                    # ----------------------------------------------------------------------------------
-
-                    if ($process.ExitCode -eq 0 -and (Test-Path $finalOutputPdf)) {
-                        Write-Log "Successfully created combined PDF: $finalOutputPdf"
+                    # Create temp directory for intermediate merges
+                    $mergeTempDir = Join-Path $tempFolder "merge_temp"
+                    New-Item -ItemType Directory -Path $mergeTempDir -Force | Out-Null
+                    
+                    # Process in chunks of 20 files
+                    $chunkSize = 20
+                    $chunks = [Math]::Ceiling($sortedPdfFiles.Count / $chunkSize)
+                    $intermediatePdfs = @()
+                    
+                    Write-Log "Processing $($sortedPdfFiles.Count) PDFs in $chunks chunks..." "Info" "PDFtk"
+                    
+                    for ($i = 0; $i -lt $chunks; $i++) {
+                        $start = $i * $chunkSize
+                        $currentChunk = $sortedPdfFiles[$start..([Math]::Min($start + $chunkSize - 1, $sortedPdfFiles.Count - 1))]
+                        $chunkOutput = Join-Path $mergeTempDir "chunk_$i.pdf"
                         
-                        # Clean up individual PDF files
-                        $sortedPdfFiles | ForEach-Object {
-                            Remove-Item -Path $_ -Force
-                            Write-Log "Cleaned up temporary PDF: $_"
+                        Write-Log "Merging chunk $($i + 1) of $chunks..." "Info" "PDFtk"
+                        
+                        # Build shorter command for chunk merge
+                        $pdfTkArgs = @($currentChunk | ForEach-Object { "`"$_`"" })
+                        $pdfTkArgs += "cat", "output", "`"$chunkOutput`""
+                        
+                        $process = Start-Process -FilePath $pdfTkPath -ArgumentList $pdfTkArgs -Wait -NoNewWindow -PassThru
+                        
+                        if ($process.ExitCode -eq 0 -and (Test-Path $chunkOutput)) {
+                            $intermediatePdfs += $chunkOutput
+                            Write-Log "Successfully merged chunk $($i + 1)" "Info" "PDFtk"
+                            
+                            # Clean up PDFs that were merged into this chunk
+                            $currentChunk | ForEach-Object {
+                                Remove-Item -Path $_ -Force
+                                Write-Log "Cleaned up merged PDF: $_" "Info" "PDFtk"
+                            }
+                        }
+                        else {
+                            throw "Failed to merge chunk $($i + 1)"
                         }
                     }
-                    else {
-                        throw "PDFtk failed with exit code: $($process.ExitCode)"
+                    
+                    # Final merge of intermediate PDFs
+                    if ($intermediatePdfs.Count -gt 0) {
+                        Write-Log "Performing final merge of $($intermediatePdfs.Count) chunks..." "Info" "PDFtk"
+                        
+                        $pdfTkArgs = @($intermediatePdfs | ForEach-Object { "`"$_`"" })
+                        $pdfTkArgs += "cat", "output", "`"$finalOutputPdf`""
+                        
+                        $process = Start-Process -FilePath $pdfTkPath -ArgumentList $pdfTkArgs -Wait -NoNewWindow -PassThru
+                        
+                        if ($process.ExitCode -eq 0 -and (Test-Path $finalOutputPdf)) {
+                            Write-Log "Successfully created final PDF: $finalOutputPdf" "Info" "PDFtk"
+                            # Clean up intermediate PDFs
+                            $intermediatePdfs | ForEach-Object {
+                                Remove-Item -Path $_ -Force
+                            }
+                            Remove-Item -Path $mergeTempDir -Recurse -Force
+                        }
+                        else {
+                            throw "Final merge failed"
+                        }
                     }
                 }
                 catch {
-                    Write-Log "Error during PDF combination: $_" "Error"
+                    Write-Log "Error during PDF combination: $_" "Error" "PDFtk"
                     throw
                 }
-            }
-            else {
-                throw "No PDF files found to merge"
             }
         }
         else {
