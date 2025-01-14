@@ -117,7 +117,7 @@ $imageExtensions = @(".bmp", ".dib", ".jpg", ".jpeg", ".jpe", ".jiff", ".gif", "
 # Get the number of logical processors (threads) and set a conservative limit
 # ----------------------------------------------------------------------------------
 $cpuThreads = (Get-CimInstance Win32_ComputerSystem).NumberOfLogicalProcessors
-$maxThreads = [Math]::Max(1, [Math]::Floor($cpuThreads * 1.00)) # 0.75 or 75% is the default
+$maxThreads = [Math]::Max(1, [Math]::Floor($cpuThreads * 1.00)) # 1.00 or 100% is the default thread utilization
 Write-Log "Detected $cpuThreads CPU threads. Using $maxThreads threads for processing." "Info"
 # ----------------------------------------------------------------------------------
 
