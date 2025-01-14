@@ -21,9 +21,9 @@ jobs:
           sudo apt-get install git-lfs
           git lfs install
 
-      - name: Pull LFS files
-        run: |
-          git lfs pull
+    # - name: Pull LFS files
+    #   run: |
+    #     git lfs pull
 
       - name: Generate ZIP File for Download
         run: |
