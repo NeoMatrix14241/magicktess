@@ -129,7 +129,7 @@ function Test-ImageFileIntegrity {
     
     try {
         # Use ImageMagick to identify the image
-        $process = Start-Process -FilePath $imageMagickPath -ArgumentList "identify", "`"$imagePath`"" -Wait -NoNewWindow -PassThru
+        $process = Start-Process -FilePath $imageMagickPath -ArgumentList "identify", "`"$imagePath`"" -Wait -NoNewWindow -PassThru -ThrottleLimit 500
         return $process.ExitCode -eq 0
     }
     catch {
@@ -140,30 +140,18 @@ function Test-ImageFileIntegrity {
 # Track corrupted files globally using thread-safe collection
 $global:corruptedFiles = [System.Collections.Concurrent.ConcurrentBag[string]]::new()
 
-# Add thread-safe counters
-$global:processedFiles = [System.Collections.Concurrent.ConcurrentDictionary[string,byte]]::new()
-$global:successfulFiles = [System.Collections.Concurrent.ConcurrentDictionary[string,byte]]::new()
-$global:failedFiles = [System.Collections.Concurrent.ConcurrentDictionary[string,byte]]::new()
-
-# Get all subfolders in the root folder excluding output folders
-$subfolders = Get-ChildItem -Path $rootFolder -Recurse -Directory | Where-Object { $_.FullName -notlike "*\output*" }
-
 Write-Log "Starting parallel file integrity verification phase..." "Info"
 
 # Get all image files first
-$allImageFiles = $subfolders | ForEach-Object {
-    Get-ChildItem -Path $_.FullName -File | 
+$allImageFiles = Get-ChildItem -Path $rootFolder -Recurse -File | 
     Where-Object { $imageExtensions -contains $_.Extension.ToLower() }
-}
 
-# Process files in parallel batches
-$allImageFiles | ForEach-Object -ThrottleLimit $maxThreads -Parallel {
-    # Import required variables from parent scope
+# Process files in parallel using ForEach-Object -Parallel
+$allImageFiles | ForEach-Object -ThrottleLimit 500 -Parallel {
     $imageMagickPath = $using:imageMagickPath
     $logFilePath = $using:logFilePath
     $corruptedFiles = $using:corruptedFiles
 
-    # Create local function copy
     function Write-Log {
         param (
             [string]$message,
@@ -199,21 +187,18 @@ $allImageFiles | ForEach-Object -ThrottleLimit $maxThreads -Parallel {
         
         Write-Host $logMessage -ForegroundColor $color
     }
-
-    function Test-ImageFileIntegrity {
-        param ([string]$imagePath)
-        try {
-            $process = Start-Process -FilePath $imageMagickPath -ArgumentList "identify", "`"$imagePath`"" -Wait -NoNewWindow -PassThru
-            return $process.ExitCode -eq 0
-        }
-        catch {
-            return $false
+    
+    # Verify file integrity
+    Write-Log "Verifying file integrity: $($_.Name)" "Info" "ImageMagick"
+    try {
+        $process = Start-Process -FilePath $imageMagickPath -ArgumentList "identify", "-quiet","`"$($_.FullName)`"" -Wait -NoNewWindow -PassThru
+        if ($process.ExitCode -ne 0) {
+            Write-Log "Corrupted file detected: $($_.FullName)" "Error" "ImageMagick"
+            $corruptedFiles.Add($_.FullName)
         }
     }
-
-    Write-Log "Verifying file integrity: $($_.Name)" "Info" "ImageMagick"
-    if (-not (Test-ImageFileIntegrity -imagePath $_.FullName)) {
-        Write-Log "Corrupted file detected: $($_.FullName)" "Error" "ImageMagick"
+    catch {
+        Write-Log "Error verifying file: $($_.FullName)" "Error" "ImageMagick"
         $corruptedFiles.Add($_.FullName)
     }
 }
@@ -223,6 +208,14 @@ if ($global:corruptedFiles.Count -gt 0) {
     $global:corruptedFiles | ForEach-Object { Write-Log $_ "Error" }
     Write-Log "Will proceed with processing non-corrupted files only." "Warning"
 }
+
+# Add thread-safe counters
+$global:processedFiles = [System.Collections.Concurrent.ConcurrentDictionary[string,byte]]::new()
+$global:successfulFiles = [System.Collections.Concurrent.ConcurrentDictionary[string,byte]]::new()
+$global:failedFiles = [System.Collections.Concurrent.ConcurrentDictionary[string,byte]]::new()
+
+# Get all subfolders in the root folder excluding output folders
+$subfolders = Get-ChildItem -Path $rootFolder -Recurse -Directory | Where-Object { $_.FullName -notlike "*\output*" }
 
 # Capture the start time for performance tracking
 $startTime = Get-Date
@@ -284,13 +277,16 @@ $subfolders | ForEach-Object -ThrottleLimit $maxThreads -Parallel {
     Write-Log "Processing subfolder: $($subfolder.FullName)"
 
     try {
-        # Get all image files with the specified extensions
+        # Get all image files with the specified extensions, excluding corrupted files
         $imageFiles = Get-ChildItem -Path $subfolder.FullName -File | 
-        Where-Object { $imageExtensions -contains $_.Extension.ToLower() } |
+        Where-Object { 
+            $imageExtensions -contains $_.Extension.ToLower() -and 
+            $_.FullName -notin $using:corruptedFiles 
+        } |
         Sort-Object Name
 
         if ($imageFiles.Count -gt 0) {
-            Write-Log "Found $($imageFiles.Count) image files in subfolder $($subfolder.Name)"
+            Write-Log "Found $($imageFiles.Count) image files in subfolder $($subfolder.Name) (excluding corrupted files)"
 
             # Create temp folder for processing with counter for duplicates
             $baseTempFolder = Join-Path $outputFolder "temp_$($subfolder.Name)"
