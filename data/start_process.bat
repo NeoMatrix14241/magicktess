@@ -6,11 +6,6 @@ set "scriptPath=%~dp0"
 if "%scriptPath:~-1%"=="\" set "scriptPath=%scriptPath:~0,-1%"
 cd /d "%scriptPath%"
 cls
-:: -- DEPRECATED --
-:: if not exist "input" mkdir input
-:: if not exist "archive" mkdir archive
-:: if not exist "output" mkdir output
-:: if not exist "logs" mkdir logs
 where pwsh >nul 2>nul
 if %errorlevel% neq 0 (
     powershell.exe -ExecutionPolicy RemoteSigned -File "%scriptPath%\validatedir.ps1"
