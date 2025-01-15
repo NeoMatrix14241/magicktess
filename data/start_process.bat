@@ -4,6 +4,7 @@ cls
 title MagickTessTK OCR - Automated OCR Processing Tool
 set "scriptPath=%~dp0"
 if "%scriptPath:~-1%"=="\" set "scriptPath=%scriptPath:~0,-1%"
+cd /d "%scriptPath%"
 cls
 :: -- DEPRECATED --
 :: if not exist "input" mkdir input
@@ -12,19 +13,13 @@ cls
 :: if not exist "logs" mkdir logs
 where pwsh >nul 2>nul
 if %errorlevel% neq 0 (
-    powershell.exe -Command "Get-ChildItem -Path '%scriptPath%' -File | Where-Object { $_.Name -in @('magicktesstk-st.ps1', 'magicktesstk-mt.ps1', 'magicktesstk-gui.ps1', 'validatedir.ps1', 'settings.ini', 'start_process.bat', 'launcher.bat', 'ReadMe.txt') } | Unblock-File"
-    powershell.exe -Command "Get-ChildItem -Path '%scriptPath%'\setup' -Recurse -File | Unblock-File"
-    powershell.exe -ExecutionPolicy RemoteSigned -File "validatedir.ps1"
+    powershell.exe -ExecutionPolicy RemoteSigned -File "%scriptPath%\validatedir.ps1"
 ) else (
     pwsh -NoProfile -Command "exit" >nul 2>nul
     if %errorlevel% neq 0 (
-        powershell.exe -Command "Get-ChildItem -Path '%scriptPath%' -File | Where-Object { $_.Name -in @('magicktesstk-st.ps1', 'magicktesstk-mt.ps1', 'magicktesstk-gui.ps1', 'validatedir.ps1', 'settings.ini', 'start_process.bat', 'launcher.bat', 'ReadMe.txt') } | Unblock-File"
-        powershell.exe -Command "Get-ChildItem -Path '%scriptPath%\setup' -Recurse -File | Unblock-File"
-        powershell.exe -ExecutionPolicy RemoteSigned -File "validatedir.ps1"
+        powershell.exe -ExecutionPolicy RemoteSigned -File "%scriptPath%\validatedir.ps1"
     ) else (
-        pwsh.exe -Command "Get-ChildItem -Path '%scriptPath%' -File | Where-Object { $_.Name -in @('magicktesstk-st.ps1', 'magicktesstk-mt.ps1', 'magicktesstk-gui.ps1', 'validatedir.ps1', 'settings.ini', 'start_process.bat', 'launcher.bat', 'ReadMe.txt') } | Unblock-File"
-        pwsh.exe -Command "Get-ChildItem -Path '%scriptPath%'\setup' -Recurse -File | Unblock-File"
-        pwsh.exe -ExecutionPolicy RemoteSigned -File "validatedir.ps1"
+        pwsh.exe -ExecutionPolicy RemoteSigned -File "%scriptPath%\validatedir.ps1"
     )
 )
 
@@ -56,12 +51,12 @@ cls
 
 where pwsh >nul 2>nul
 if %errorlevel% neq 0 (
-    powershell.exe -ExecutionPolicy RemoteSigned -File "magicktesstk-st.ps1"
+    powershell.exe -ExecutionPolicy RemoteSigned -File "%scriptPath%\magicktesstk-st.ps1"
 ) else (
     pwsh -NoProfile -Command "exit" >nul 2>nul
     if %errorlevel% neq 0 (
-        powershell.exe -ExecutionPolicy RemoteSigned -File "magicktesstk-st.ps1"
+        powershell.exe -ExecutionPolicy RemoteSigned -File "%scriptPath%\magicktesstk-st.ps1"
     ) else (
-        pwsh.exe -ExecutionPolicy RemoteSigned -File "magicktesstk-mt.ps1"
+        pwsh.exe -ExecutionPolicy RemoteSigned -File "%scriptPath%\magicktesstk-mt.ps1"
     )
 )

@@ -15,6 +15,7 @@ powershell.exe -WindowStyle Hidden -Command "if (Test-Path '%scriptPath%\setup')
 REM Check for PowerShell Core first
 where pwsh >nul 2>nul
 if %errorlevel% equ 0 (
+    pwsh.exe -NoProfile -ExecutionPolicy RemoteSigned -File "%scriptPath%\data\validatedir.ps1"
     pwsh.exe -NoProfile -ExecutionPolicy RemoteSigned -File "%scriptPath%\data\magicktesstk-gui.ps1"
 ) else (
     start start_process.bat

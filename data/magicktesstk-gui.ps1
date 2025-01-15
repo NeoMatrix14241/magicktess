@@ -200,13 +200,20 @@ $cmbPSM = $window.FindName("cmbPSM")
 $txtQualityValue = $window.FindName("txtQualityValue")
 $txtDeskewValue = $window.FindName("txtDeskewValue")
 
-# Populate colorspace options
+# Initialize ComboBox data - do this only once
+$compressionTypes = @("LZW", "ZIP", "RLE", "NONE", "JPEG", "WEBP")
 $colorspaces = @("Auto", "RGB", "CMYK", "GRAY", "sRGB", "scRGB", "Lab", "XYZ", "HSL", "HSB", "YCbCr", "CMY")
-$cmbColorspace.ItemsSource = $colorspaces
-
-# Populate PSM options
 $psmOptions = 0..13 | ForEach-Object { "PSM $_" }
-$cmbPSM.ItemsSource = $psmOptions
+
+# Set ItemsSource for ComboBoxes
+$cmbCompression.Items.Clear()
+$compressionTypes | ForEach-Object { $cmbCompression.Items.Add($_) }
+
+$cmbColorspace.Items.Clear()
+$colorspaces | ForEach-Object { $cmbColorspace.Items.Add($_) }
+
+$cmbPSM.Items.Clear()
+$psmOptions | ForEach-Object { $cmbPSM.Items.Add($_) }
 
 # Define language combinations with display names
 $languageCombos = @(
@@ -257,6 +264,7 @@ if (Test-Path $iniPath) {
     # Load ImageMagick settings
     if ($ini.ContainsKey("ImageMagick")) {
         try {
+            # Use SelectedItem for ItemsSource-bound ComboBoxes
             $cmbCompression.SelectedItem = $ini.ImageMagick.CompressionType
             $sldQuality.Value = [double]$ini.ImageMagick.Quality
             $sldDeskew.Value = [double]($ini.ImageMagick.DeskewThreshold -replace '%')
@@ -461,22 +469,6 @@ $sldQuality.Add_ValueChanged({
 $sldDeskew.Add_ValueChanged({
     $txtDeskewValue.Text = "$([Math]::Round($sldDeskew.Value))%"
 })
-
-# Modified ComboBox population
-$cmbCompression.Items.Clear()
-@("LZW", "ZIP", "RLE", "NONE", "JPEG", "WEBP") | ForEach-Object {
-    $cmbCompression.Items.Add($_)
-}
-
-$cmbColorspace.Items.Clear()
-$colorspaces | ForEach-Object {
-    $cmbColorspace.Items.Add($_)
-}
-
-$cmbPSM.Items.Clear()
-0..13 | ForEach-Object {
-    $cmbPSM.Items.Add("PSM $_")
-}
 
 # Show window
 $Window.Topmost = $true
