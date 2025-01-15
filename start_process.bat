@@ -3,12 +3,32 @@ color 0b
 cls
 title MagickTessTK OCR - Automated OCR Processing Tool
 :START
+set "scriptPath=%~dp0"
+if "%scriptPath:~-1%"=="\" set "scriptPath=%scriptPath:~0,-1%"
 cls
 :: -- DEPRECATED --
 :: if not exist "input" mkdir input
 :: if not exist "archive" mkdir archive
 :: if not exist "output" mkdir output
 :: if not exist "logs" mkdir logs
+where pwsh >nul 2>nul
+if %errorlevel% neq 0 (
+    powershell.exe -Command "Get-ChildItem -Path '%scriptPath%' -File | Where-Object { $_.Name -in @('magicktesstk-st.ps1', 'magicktesstk-mt.ps1', 'validatedir.ps1', 'settings.ini', 'start_process.bat', 'ReadMe.txt') } | Unblock-File"
+    powershell.exe -Command "Get-ChildItem -Path '%scriptPath%'\setup' -Recurse -File | Unblock-File"
+    powershell.exe -ExecutionPolicy RemoteSigned -File "validatedir.ps1"
+) else (
+    pwsh -NoProfile -Command "exit" >nul 2>nul
+    if %errorlevel% neq 0 (
+        powershell.exe -Command "Get-ChildItem -Path '%scriptPath%' -File | Where-Object { $_.Name -in @('magicktesstk-st.ps1', 'magicktesstkk-mt.ps1', 'validatedir.ps1', 'settings.ini', 'start_process.bat', 'ReadMe.txt') } | Unblock-File"
+        powershell.exe -Command "Get-ChildItem -Path '%scriptPath%\setup' -Recurse -File | Unblock-File"
+        powershell.exe -ExecutionPolicy RemoteSigned -File "validatedir.ps1"
+    ) else (
+        pwsh.exe -Command "Get-ChildItem -Path '%scriptPath%' -File | Where-Object { $_.Name -in @('magicktesstk-st.ps1', 'magicktesstk-mt.ps1', 'validatedir.ps1', 'settings.ini', 'start_process.bat', 'ReadMe.txt') } | Unblock-File"
+        pwsh.exe -Command "Get-ChildItem -Path '%scriptPath%'\setup' -Recurse -File | Unblock-File"
+        pwsh.exe -ExecutionPolicy RemoteSigned -File "validatedir.ps1"
+    )
+)
+
 cls
 echo.
 echo NAPS2 on Steroids
@@ -36,23 +56,14 @@ echo The script will process your input folder for OCR
 pause
 cls
 
-set "scriptPath=%~dp0"
-if "%scriptPath:~-1%"=="\" set "scriptPath=%scriptPath:~0,-1%"
-
 where pwsh >nul 2>nul
 if %errorlevel% neq 0 (
-    powershell.exe -Command "Get-ChildItem -Path '%scriptPath%' -File | Where-Object { $_.Name -in @('magicktesstk-st.ps1', 'magicktesstk-mt.ps1', 'validatedir.ps1', 'settings.ini', 'start_process.bat', 'ReadMe.txt') } | Unblock-File"
-    powershell.exe -Command "Get-ChildItem -Path '%scriptPath%'\setup' -Recurse -File | Unblock-File"
     powershell.exe -ExecutionPolicy RemoteSigned -File "magicktesstk-st.ps1"
 ) else (
     pwsh -NoProfile -Command "exit" >nul 2>nul
     if %errorlevel% neq 0 (
-        powershell.exe -Command "Get-ChildItem -Path '%scriptPath%' -File | Where-Object { $_.Name -in @('magicktesstk-st.ps1', 'magicktesstkk-mt.ps1', 'validatedir.ps1', 'settings.ini', 'start_process.bat', 'ReadMe.txt') } | Unblock-File"
-        powershell.exe -Command "Get-ChildItem -Path '%scriptPath%\setup' -Recurse -File | Unblock-File"
         powershell.exe -ExecutionPolicy RemoteSigned -File "magicktesstk-st.ps1"
     ) else (
-        pwsh.exe -Command "Get-ChildItem -Path '%scriptPath%' -File | Where-Object { $_.Name -in @('magicktesstk-st.ps1', 'magicktesstk-mt.ps1', 'validatedir.ps1', 'settings.ini', 'start_process.bat', 'ReadMe.txt') } | Unblock-File"
-        pwsh.exe -Command "Get-ChildItem -Path '%scriptPath%'\setup' -Recurse -File | Unblock-File"
         pwsh.exe -ExecutionPolicy RemoteSigned -File "magicktesstk-mt.ps1"
     )
 )
