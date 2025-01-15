@@ -208,14 +208,7 @@ $cmbColorspace.ItemsSource = $colorspaces
 $psmOptions = 0..13 | ForEach-Object { "PSM $_" }
 $cmbPSM.ItemsSource = $psmOptions
 
-# Create language mapping for display names
-$languageMap = @{
-    "eng" = "English"
-    "enm" = "English (Old)"
-    "fil" = "Filipino"
-}
-
-# Define combinations with display names
+# Define language combinations with display names
 $languageCombos = @(
     @{ Display = "English"; Value = "eng" }
     @{ Display = "English + English (Old)"; Value = "eng+enm" }
@@ -486,4 +479,13 @@ $cmbPSM.Items.Clear()
 }
 
 # Show window
+$Window.Topmost = $true
+$Window.Activate()
+$timer = New-Object System.Windows.Threading.DispatcherTimer
+$timer.Interval = [TimeSpan]::FromMilliseconds(100)
+$timer.Add_Tick({
+    $Window.Topmost = $false
+    $timer.Stop()
+})
+$timer.Start()
 $window.ShowDialog() | Out-Null
