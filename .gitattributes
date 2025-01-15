@@ -1,6 +1,6 @@
-setup/* filter=lfs diff=lfs merge=lfs -text
-setup/data/gs10040w64.exe filter=lfs diff=lfs merge=lfs -text
-setup/data/PowerShell-7.4.6-win-x64.msi filter=lfs diff=lfs merge=lfs -text
+data/setup/* filter=lfs diff=lfs merge=lfs -text
+data/setup/data/gs10040w64.exe filter=lfs diff=lfs merge=lfs -text
+data/setup/data/PowerShell-7.4.6-win-x64.msi filter=lfs diff=lfs merge=lfs -text
 .exe filter=lfs diff=lfs merge=lfs -text
 .msi filter=lfs diff=lfs merge=lfs -text
 *.exe filter=lfs diff=lfs merge=lfs -text
