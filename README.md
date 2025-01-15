@@ -109,9 +109,3 @@ input
 - **folder2** → `folder2.pdf`
 
 ---
-## 🧪 Experimental (Optional)
-- Right-click in the `input` folder while holding **Shift** and select **Open PowerShell window here**.
-- Run the following command:
-   ```
-   .\magicktess.ps1 input
-   ```
