@@ -19,6 +19,64 @@ $null = Register-EngineEvent -SourceIdentifier PowerShell.Exiting -Action {
     }
 }
 
+# Function to read settings.INI file - MOVE THIS UP before we use it
+function Get-IniContent {
+    param (
+        [string]$FilePath
+    )
+    
+    $ini = @{}
+    switch -regex -file $FilePath {
+        "^\[(.+)\]" {
+            $section = $matches[1]
+            $ini[$section] = @{}
+        }
+        "(.+?)\s*=\s*(.*)" {
+            if ($section) {
+                $name, $value = $matches[1..2]
+                $ini[$section][$name] = $value.Trim()
+            }
+        }
+    }
+    return $ini
+}
+
+# Define the script directory and logs folder
+$scriptDirectory = $PSScriptRoot
+$settingsPath = Join-Path $scriptDirectory "settings.ini"
+
+# Check if settings file exists
+if (-not (Test-Path $settingsPath)) {
+    Write-Host "Settings file not found at: $settingsPath" -ForegroundColor Red
+    exit 1
+}
+
+# Read settings file
+try {
+    $settings = Get-IniContent $settingsPath
+    
+    # Verify we can read the folder settings
+    if (-not $settings.ContainsKey("Folders")) {
+        Write-Host "Missing [Folders] section in settings.ini" -ForegroundColor Red
+        exit 1
+    }
+    
+    # Get folder paths
+    $rootFolder = $settings["Folders"]["InputFolder"]
+    $outputFolder = $settings["Folders"]["OutputFolder"]
+    $archiveFolder = $settings["Folders"]["ArchiveFolder"]
+    $createMissingFolders = $settings["Folders"]["CreateMissingFolders"]
+    
+    Write-Host "Settings loaded:"
+    Write-Host "Input Folder: $rootFolder"
+    Write-Host "Output Folder: $outputFolder"
+    Write-Host "Archive Folder: $archiveFolder"
+}
+catch {
+    Write-Host "Error reading settings file: $_" -ForegroundColor Red
+    exit 1
+}
+
 # Define the script directory and logs folder
 $scriptDirectory = $PSScriptRoot
 $logsFolder = Join-Path $scriptDirectory "logs"
@@ -69,24 +127,34 @@ Write-Log "Script started." "Info"
 Write-Log "Current UTC Time: $($currentUTC.ToString('yyyy-MM-dd HH:mm:ss'))" "Info"
 Write-Log "Current User: $currentUser" "Info"
 
-# Check if there are any arguments passed to the script
-if ($args.Length -eq 0) {
-    Write-Log "Usage: .\magicktess.ps1 input" "Warning"
-    exit
+# Get folder paths from settings
+$rootFolder = $settings["Folders"]["InputFolder"]
+$outputFolder = $settings["Folders"]["OutputFolder"]
+$archiveFolder = $settings["Folders"]["ArchiveFolder"]
+$createMissingFolders = $settings["Folders"]["CreateMissingFolders"]
+
+# Create folders if enabled and they don't exist
+if ($createMissingFolders -eq "ON") {
+    @($rootFolder, $outputFolder, $archiveFolder) | ForEach-Object {
+        if (-not (Test-Path $_)) {
+            New-Item -ItemType Directory -Path $_ -Force
+            Write-Log "Created folder: $_" "Info"
+        }
+    }
 }
 
-# Define root, output, and archive folders
-$rootFolder = Join-Path $scriptDirectory $args[0]
-$outputFolder = Join-Path $scriptDirectory "output"
-if (-not (Test-Path -Path $outputFolder)) {
-    New-Item -ItemType Directory -Path $outputFolder
-    Write-Log "Created folder for processed PDFs: $outputFolder" "Info"
+# Validate folders exist
+if (-not (Test-Path $rootFolder)) {
+    Write-Log "Input folder does not exist: $rootFolder" "Error"
+    exit 1
 }
-
-$archiveFolder = Join-Path $scriptDirectory "archive"
-if (-not (Test-Path -Path $archiveFolder)) {
-    New-Item -ItemType Directory -Path $archiveFolder
-    Write-Log "Created archive folder: $archiveFolder" "Info"
+if (-not (Test-Path $outputFolder)) {
+    Write-Log "Output folder does not exist: $outputFolder" "Error"
+    exit 1
+}
+if (-not (Test-Path $archiveFolder)) {
+    Write-Log "Archive folder does not exist: $archiveFolder" "Error"
+    exit 1
 }
 
 # Paths to ImageMagick, Tesseract OCR, and PDFtk
@@ -221,38 +289,6 @@ $subfolders = Get-ChildItem -Path $rootFolder -Recurse -Directory | Where-Object
 
 # Capture the start time for performance tracking
 $startTime = Get-Date
-
-# Function to read settings.INI file
-function Get-IniContent {
-    param (
-        [string]$FilePath
-    )
-    
-    $ini = @{}
-    switch -regex -file $FilePath {
-        "^\[(.+)\]" {
-            $section = $matches[1]
-            $ini[$section] = @{}
-        }
-        "(.+?)\s*=\s*(.*)" {
-            if ($section) {
-                $name, $value = $matches[1..2]
-                $ini[$section][$name] = $value.Trim()
-            }
-        }
-    }
-    return $ini
-}
-
-# Read settings from INI file
-$settingsPath = Join-Path $scriptDirectory "settings.ini"
-if (-not (Test-Path $settingsPath)) {
-    Write-Log "Settings file not found: $settingsPath" "Error"
-    exit
-}
-
-$settings = Get-IniContent $settingsPath
-Write-Log "Successfully loaded settings from: $settingsPath" "Info"
 
 # Process each subfolder in parallel
 $subfolders | ForEach-Object -ThrottleLimit $maxThreads -Parallel {
@@ -652,8 +688,8 @@ $subfolders | ForEach-Object -ThrottleLimit $maxThreads -Parallel {
                     $mergeTempDir = Join-Path $tempFolder "merge_temp"
                     New-Item -ItemType Directory -Path $mergeTempDir -Force | Out-Null
                     
-                    # Process in chunks of 20 files
-                    $chunkSize = 20
+                    # Process in chunks of 25 files
+                    $chunkSize = 25
                     $chunks = [Math]::Ceiling($sortedPdfFiles.Count / $chunkSize)
                     $intermediatePdfs = @()
                     
