@@ -46,11 +46,7 @@ When executed, `start_process.bat` will create the following folders:
 
 2. Navigate to the `setup` folder and run "setup.bat".
 
-3. Copy `.traineddata` files from `setup/tessdata_best` to Tesseract's tessdata directory:
-   ```
-   Default Location: C:\Program Files\Tesseract-OCR\tessdata
-   ```
-4. Run `start_process.bat` to set up the necessary folders.
+3. Run `launcher.bat` to launch the GUI and setup the OCR process.
 
 ---
 ## ⚙️ Folder Structure & PDF Naming
