@@ -4,10 +4,11 @@ cls
 title MagickTessTK OCR - Automated OCR Processing Tool
 :START
 cls
-if not exist "input" mkdir input
-if not exist "archive" mkdir archive
-if not exist "output" mkdir output
-if not exist "logs" mkdir logs
+:: -- DEPRECATED --
+:: if not exist "input" mkdir input
+:: if not exist "archive" mkdir archive
+:: if not exist "output" mkdir output
+:: if not exist "logs" mkdir logs
 cls
 echo.
 echo NAPS2 on Steroids
