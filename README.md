@@ -41,8 +41,8 @@ When executed, `start_process.bat` will create the following folders:
 ---
 ## 🛠️ Setup & Installation Instructions
 
-1. Download and extract MagickTess zip file contents
-   - [MagickTess v1.0.0.0 Release](https://github.com/NeoMatrix14241/magicktess/releases/download/MagickTess-v1.0.0.0/MagickTess-v1.0.0.0.zip)
+1. Download and extract MagickTessTK zip file contents
+   - [MagickTessTK v2.0.0.0 Release](https://github.com/NeoMatrix14241/MagickTessTK/releases/download/MagickTessTK-v2.0.0.0/MagickTessTK-v2.0.0.0.zip)
 
 2. Navigate to the `setup` folder and run "setup.bat".
 
