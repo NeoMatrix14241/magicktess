@@ -2,7 +2,6 @@
 color 0b
 cls
 title MagickTessTK OCR - Automated OCR Processing Tool
-:START
 set "scriptPath=%~dp0"
 if "%scriptPath:~-1%"=="\" set "scriptPath=%scriptPath:~0,-1%"
 cls
@@ -53,7 +52,6 @@ echo ^> logs - Where the logs are stored for the entire process
 echo ---------------------------------------------------------------------------------------------
 echo.
 echo The script will process your input folder for OCR
-pause
 cls
 
 where pwsh >nul 2>nul
@@ -67,6 +65,3 @@ if %errorlevel% neq 0 (
         pwsh.exe -ExecutionPolicy RemoteSigned -File "magicktesstk-mt.ps1"
     )
 )
-
-GOTO START
-pause
