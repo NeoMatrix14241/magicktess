@@ -100,8 +100,8 @@ input
 ---
 ## 📄 PDF Naming Convention
 
-- **folder1/subfolder1** → `subfolder1.pdf`
-- **folder1/subfolder2** → `subfolder2.pdf`
-- **folder2** → `folder2.pdf`
+- **folder1/subfolder1/many tif files here** → `subfolder1.pdf`
+- **folder1/subfolder2/many tif files here** → `subfolder2.pdf`
+- **folder2/many tif files here** → `folder2.pdf`
 
 ---
