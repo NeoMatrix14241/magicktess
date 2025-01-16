@@ -426,6 +426,11 @@ function Stop-CurrentProcess {
         $script:outputTimer.Stop()
         $script:outputTimer = $null
     }
+    if ($script:outputJob) {
+        Stop-Job -Job $script:outputJob
+        Remove-Job -Job $script:outputJob -Force
+        $script:outputJob = $null
+    }
     Remove-Item "$env:TEMP\output.txt" -ErrorAction SilentlyContinue
     $btnStart.IsEnabled = $true
     $btnCancel.IsEnabled = $false
@@ -671,63 +676,112 @@ $btnStart.Add_Click({
     # Clear previous output
     $txtOutput.Text = ""
     
-    # Start process with redirected output
-    $script:currentProcess = Start-Process -FilePath $startProcess -NoNewWindow -PassThru -RedirectStandardOutput "$env:TEMP\output.txt"
+    # Start process with properly quoted path
+    $script:currentProcess = Start-Process cmd -ArgumentList @(
+        "/c",
+        "`"$startProcess`""  # Add quotes around the path
+    ) -RedirectStandardOutput "$env:TEMP\output.txt" -NoNewWindow -PassThru
     
     # Save process ID for cleanup
     $script:currentProcess.Id | Set-Content $pidFile
     
-    # Track last read position
-    $script:lastReadLength = 0
+    # Track last position
+    $script:lastOffset = 0
     
     # Update button states
     $btnStart.IsEnabled = $false
     $btnCancel.IsEnabled = $true
     
-    # Create a timer to read output
+    # Create a timer to update UI
     $script:outputTimer = New-Object System.Windows.Threading.DispatcherTimer
-    $script:outputTimer.Interval = [TimeSpan]::FromMilliseconds(1000)  # Reduced update frequency
+    $script:outputTimer.Interval = [TimeSpan]::FromMilliseconds(1500)
     $script:outputTimer.Add_Tick({
-        if (Test-Path "$env:TEMP\output.txt") {
-            try {
-                # Read file content with file sharing enabled
-                $fileStream = [System.IO.File]::Open("$env:TEMP\output.txt", 
-                    [System.IO.FileMode]::Open,
-                    [System.IO.FileAccess]::Read,
-                    [System.IO.FileShare]::ReadWrite)
-                    
-                $streamReader = New-Object System.IO.StreamReader($fileStream)
-                $content = $streamReader.ReadToEnd()
-                $streamReader.Close()
-                $fileStream.Close()
-
-                if ($content.Length -gt $script:lastReadLength) {
-                    # Only update if there's new content
-                    $txtOutput.Text = $content
-                    $script:lastReadLength = $content.Length
-                    
-                    # Batch UI updates
-                    $txtOutput.Dispatcher.BeginInvoke([Action]{
-                        $txtOutput.CaretIndex = $txtOutput.Text.Length
-                        $txtScrollViewer.ScrollToBottom()
-                    }, [System.Windows.Threading.DispatcherPriority]::Background)
+        try {
+            if (Test-Path "$env:TEMP\output.txt") {
+                $fs = [System.IO.File]::Open("$env:TEMP\output.txt", 'Open', 'Read', 'ReadWrite')
+                $reader = New-Object System.IO.StreamReader($fs)
+                
+                if ($script:lastOffset -gt 0) {
+                    $reader.BaseStream.Position = $script:lastOffset
                 }
-            } catch {
-                Write-Warning "Error reading output: $_"
+                
+                while (!$reader.EndOfStream) {
+                    $line = $reader.ReadLine()
+                    if ($line) {
+                        $txtOutput.Dispatcher.Invoke([Action]{
+                            $txtOutput.AppendText("$line`r`n")
+                            $txtScrollViewer.ScrollToBottom()
+                        })
+                    }
+                }
+                
+                $script:lastOffset = $reader.BaseStream.Position
+                
+                $reader.Close()
+                $fs.Close()
             }
-        }
-        
-        # Check if process has ended
-        if ($script:currentProcess.HasExited) {
-            Stop-CurrentProcess
+            
+            # Check if process has ended
+            if ($script:currentProcess.HasExited) {
+                Start-Sleep -Milliseconds 100  # Give time for final output
+                Stop-CurrentProcess
+            }
+            
+        } catch {
+            Write-Warning "Error reading output: $_"
         }
     })
     $script:outputTimer.Start()
 })
 
 $btnCancel.Add_Click({
-    Stop-CurrentProcess
-    $txtOutput.Text += "`r`nProcess cancelled by user."
+    try {
+        # Create a single-threaded dispatcher if needed
+        if (-not [System.Windows.Threading.Dispatcher]::CurrentDispatcher) {
+            $dispatcherThread = [System.Windows.Threading.Dispatcher]::CurrentDispatcher
+            $dispatcherThread.ShutdownStarted.Add({
+                [System.Windows.Threading.Dispatcher]::CurrentDispatcher.InvokeShutdown()
+            })
+        }
+        
+        # Create and show the wait window synchronously
+        [System.Windows.Threading.Dispatcher]::CurrentDispatcher.Invoke([Action]{
+            $waitWindow = New-Object System.Windows.Window
+            $waitWindow.Title = "Please Wait"
+            $waitWindow.Width = 300
+            $waitWindow.Height = 100
+            $waitWindow.WindowStyle = "None"
+            $waitWindow.ResizeMode = "NoResize"
+            $waitWindow.WindowStartupLocation = "CenterScreen"
+            $waitWindow.Background = "#001B1B"
+            $waitWindow.Topmost = $true
+
+            $grid = New-Object System.Windows.Controls.Grid
+            $waitWindow.Content = $grid
+
+            $text = New-Object System.Windows.Controls.TextBlock
+            $text.Text = "Please wait while the script is cancelling process..."
+            $text.Foreground = "#00FF00"
+            $text.HorizontalAlignment = "Center"
+            $text.VerticalAlignment = "Center"
+            $text.FontSize = 14
+            $grid.Children.Add($text)
+
+            # Show window
+            $waitWindow.Show()
+            
+            # Process cancellation
+            Stop-CurrentProcess
+            $txtOutput.AppendText("`r`nProcess cancelled by user.")
+            $waitWindow.Close()
+        })
+
+    } catch {
+        Write-Warning "Error in cancel operation: $_"
+        # Fallback to direct cancellation
+        Stop-CurrentProcess
+        $txtOutput.AppendText("`r`nProcess cancelled by user.")
+    }
 })
 
 # Modified slider value update handlers
