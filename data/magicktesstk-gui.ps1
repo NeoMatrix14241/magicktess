@@ -694,7 +694,7 @@ $btnStart.Add_Click({
     
     # Create a timer to update UI
     $script:outputTimer = New-Object System.Windows.Threading.DispatcherTimer
-    $script:outputTimer.Interval = [TimeSpan]::FromMilliseconds(1500)
+    $script:outputTimer.Interval = [TimeSpan]::FromMilliseconds(100)
     $script:outputTimer.Add_Tick({
         try {
             if (Test-Path "$env:TEMP\output.txt") {
