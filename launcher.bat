@@ -9,8 +9,8 @@ set "scriptPath=%~dp0"
 if "%scriptPath:~-1%"=="\" set "scriptPath=%scriptPath:~0,-1%"
 
 REM Unblock files first
-powershell.exe -WindowStyle Hidden -Command "Get-ChildItem -Path '%scriptPath%' -File | Where-Object { $_.Name -match '(.ps1|.bat|.txt|.ini)$' } | Unblock-File"
-powershell.exe -WindowStyle Hidden -Command "if (Test-Path '%scriptPath%\setup') { Get-ChildItem -Path '%scriptPath%\setup' -Recurse -File | Unblock-File }"
+pwsh.exe -WindowStyle Hidden -Command "Get-ChildItem -Path '%scriptPath%' -File | Where-Object { $_.Name -match '(.ps1|.bat|.txt|.ini)$' } | Unblock-File"
+pwsh.exe -WindowStyle Hidden -Command "if (Test-Path '%scriptPath%\setup') { Get-ChildItem -Path '%scriptPath%\setup' -Recurse -File | Unblock-File }"
 
 REM Check for PowerShell Core first
 where pwsh >nul 2>nul

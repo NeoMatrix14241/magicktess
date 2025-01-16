@@ -813,7 +813,8 @@ $txtScrollViewer = ($txtOutput.Parent -as [System.Windows.Controls.ScrollViewer]
 
 $btnStart.Add_Click({
     Save-Settings
-    $startProcess = Join-Path $PSScriptRoot "start_process.bat"
+    $startProcess = Join-Path $PSScriptRoot "validatedir.ps1"
+    $startProcess = Join-Path $PSScriptRoot "magicktesstk-gui.ps1"
     
     # Clear previous output
     $txtOutput.Text = ""
