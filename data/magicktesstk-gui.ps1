@@ -257,7 +257,7 @@ try {
 
 # Add this after XAML loading and before other event handlers
 $window.Add_Closing({
-    param($sender, $e)
+    param($windowSender, $e)
     
     # Prevent window from closing with X button
     $e.Cancel = $true
@@ -395,17 +395,17 @@ function Stop-CurrentProcess {
     if ($script:currentProcess -and !$script:currentProcess.HasExited) {
         Write-Host "Stopping current process and its children..."
         # Kill all child processes recursively
-        function Kill-ProcessTree {
+        function Stop-ProcessTree {
             param($ProcessId)
             Get-CimInstance Win32_Process | Where-Object { $_.ParentProcessId -eq $ProcessId } | ForEach-Object {
-                Kill-ProcessTree $_.ProcessId
+                Stop-ProcessTree $_.ProcessId
                 Write-Host "Stopping child process: $($_.ProcessId)"
                 Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue
             }
         }
 
         # Kill the process tree starting from the main process
-        Kill-ProcessTree $script:currentProcess.Id
+        Stop-ProcessTree $script:currentProcess.Id
         $script:currentProcess | Stop-Process -Force
         $script:currentProcess = $null
         Remove-Item $pidFile -Force -ErrorAction SilentlyContinue
@@ -440,7 +440,7 @@ function Stop-CurrentProcess {
 
 # Replace the window.Add_Closing handler with this version
 $window.Add_Closing({
-    param($sender, $e)
+    param($windowSender, $e)
     
     # Show confirmation dialog
     $result = [System.Windows.MessageBox]::Show(
