@@ -1,4 +1,4 @@
-# Automated OCR PowerShell Script
+# Automated OCR GUI PowerShell 7 Dedicated Script
 
 **⚡ Alternative to NAPS2 OCR - Designed for Batch OCR Process**
 
