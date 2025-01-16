@@ -72,7 +72,7 @@ $guiSettings = $ini["GUI"] ?? @{
         Background="$($guiSettings.BackgroundColor)" 
         WindowStartupLocation="$($guiSettings.WindowStartupLocation)"
         ResizeMode="CanMinimize">
-    <Grid>
+    <Grid Name="MainGrid">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*"/>
             <ColumnDefinition Width="Auto"/>
@@ -436,7 +436,7 @@ function Stop-CurrentProcess {
     $btnCancel.IsEnabled = $false
 }
 
-# Add window closing event handler
+# Replace the window.Add_Closing handler with this version
 $window.Add_Closing({
     param($sender, $e)
     
@@ -449,62 +449,57 @@ $window.Add_Closing({
     )
     
     if ($result -eq [System.Windows.MessageBoxResult]::Yes) {
-        # Create progress window
-        $progressWindow = New-Object System.Windows.Window
-        $progressWindow.Title = "Closing Application"
-        $progressWindow.Width = 300
-        $progressWindow.Height = 100
-        $progressWindow.WindowStyle = "None"
-        $progressWindow.ResizeMode = "NoResize"
-        $progressWindow.WindowStartupLocation = "CenterScreen"
-        $progressWindow.Background = "#001B1B"
-        $progressWindow.Topmost = $true
-
-        $grid = New-Object System.Windows.Controls.Grid
-        $progressWindow.Content = $grid
-
-        $text = New-Object System.Windows.Controls.TextBlock
-        $text.Text = "Please wait while the application closes..."
-        $text.Foreground = "#00FF00"
-        $text.HorizontalAlignment = "Center"
-        $text.VerticalAlignment = "Center"
-        $text.FontSize = 14
-        $grid.Children.Add($text)
-
-        # Show progress window
-        $progressWindow.Show()
-        
-        # Process cleanup in background
-        $dispatcher = $progressWindow.Dispatcher
-        $dispatcher.BeginInvoke([Action]{
-            # Stop all processes
-            Stop-CurrentProcess
+        try {
+            # Create wait message
+            $waitMessage = New-Object System.Windows.Controls.TextBlock
+            $waitMessage.Text = "Cleaning up processes..."
+            $waitMessage.Foreground = "#00FF00"
+            $waitMessage.HorizontalAlignment = "Center"
+            $waitMessage.VerticalAlignment = "Center"
+            $waitMessage.FontSize = 14
             
-            # Unregister cleanup events
-            Unregister-EngineEvent -SourceIdentifier PowerShell.Exiting -ErrorAction SilentlyContinue
-            
-            # Kill all pwsh processes
-            Get-Process | Where-Object { 
-                $_.Name -like "*pwsh*" -and $_.Id -ne $PID 
-            } | ForEach-Object {
-                try {
-                    $children = Get-CimInstance Win32_Process | 
-                        Where-Object { $_.ParentProcessId -eq $_.Id }
-                    foreach ($child in $children) {
-                        Stop-Process -Id $child.ProcessId -Force -ErrorAction SilentlyContinue
-                    }
-                    $_ | Stop-Process -Force
-                } catch {}
+            # Add message to window
+            $mainGrid = $window.FindName("MainGrid")
+            if ($mainGrid) {
+                $mainGrid.Children.Clear()
+                $mainGrid.Children.Add($waitMessage)
             }
             
-            # Close progress window and exit
-            $progressWindow.Close()
-            Start-Process pwsh -ArgumentList "-NoProfile -WindowStyle Hidden -Command Stop-Process -Id $PID -Force" -WindowStyle Hidden
-            [Environment]::Exit(0)
-        }, [System.Windows.Threading.DispatcherPriority]::Background)
+            # Stop all processes first
+            Stop-CurrentProcess
+
+            # Clean up event subscribers
+            Get-EventSubscriber -SourceIdentifier PowerShell.Exiting -ErrorAction SilentlyContinue | 
+                ForEach-Object {
+                    Remove-Event -SourceIdentifier $_.SourceIdentifier -ErrorAction SilentlyContinue
+                    Unregister-Event -SubscriptionId $_.SubscriptionId -ErrorAction SilentlyContinue
+                }
+
+            # Clean up temp files
+            Remove-Item "$env:TEMP\output.txt" -Force -ErrorAction SilentlyContinue
+            Remove-Item $pidFile -Force -ErrorAction SilentlyContinue
+
+            # Allow window to close normally
+            $e.Cancel = $false
+        }
+        catch {
+            Write-Warning "Error during cleanup: $_"
+            # Show error and let user decide
+            $errorResult = [System.Windows.MessageBox]::Show(
+                "Error during cleanup. Force close application?",
+                "Error",
+                [System.Windows.MessageBoxButton]::YesNo,
+                [System.Windows.MessageBoxImage]::Error
+            )
+            
+            if ($errorResult -eq [System.Windows.MessageBoxResult]::Yes) {
+                Stop-Process -Id $PID -Force
+            } else {
+                $e.Cancel = $true
+            }
+        }
     }
     else {
-        # Cancel closing
         $e.Cancel = $true
     }
 })
@@ -796,20 +791,21 @@ $sldDeskew.Add_ValueChanged({
 # Show window
 try {
     Write-Host "Showing window..."
-    $Window.Topmost = $true
-    $Window.Activate()
+    $window.Topmost = $true
+    $window.Activate()
     $timer = New-Object System.Windows.Threading.DispatcherTimer
     $timer.Interval = [TimeSpan]::FromMilliseconds(100)
     $timer.Add_Tick({
-        $Window.Topmost = $false
+        $window.Topmost = $false
         $timer.Stop()
     })
     $timer.Start()
     Write-Host "Starting GUI..."
     $window.ShowDialog() | Out-Null
-} catch {
+} 
+catch {
     Write-Error "Error showing window: $_"
     Write-Error $_.ScriptStackTrace
-    Start-Sleep -Seconds 5
-    exit 1
+    Start-Sleep -Seconds 2
+    Stop-Process -Id $PID -Force
 }
