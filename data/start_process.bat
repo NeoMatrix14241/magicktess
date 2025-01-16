@@ -55,3 +55,5 @@ if %errorlevel% neq 0 (
         pwsh.exe -ExecutionPolicy RemoteSigned -File "%scriptPath%\magicktesstk-mt.ps1"
     )
 )
+
+pause
