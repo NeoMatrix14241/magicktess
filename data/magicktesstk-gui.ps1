@@ -452,19 +452,36 @@ $window.Add_Closing({
     
     if ($result -eq [System.Windows.MessageBoxResult]::Yes) {
         try {
-            # Create wait message
-            $waitMessage = New-Object System.Windows.Controls.TextBlock
-            $waitMessage.Text = "Cleaning up processes..."
-            $waitMessage.Foreground = "#00FF00"
-            $waitMessage.HorizontalAlignment = "Center"
-            $waitMessage.VerticalAlignment = "Center"
-            $waitMessage.FontSize = 14
-            
-            # Add message to window
-            $mainGrid = $window.FindName("MainGrid")
-            if ($mainGrid) {
-                $mainGrid.Children.Clear()
-                $mainGrid.Children.Add($waitMessage)
+            # Create and show wait window
+            $waitWindow = New-Object System.Windows.Window
+            $waitWindow.Title = "Please Wait"
+            $waitWindow.Width = 300
+            $waitWindow.Height = 100
+            $waitWindow.WindowStyle = "None"
+            $waitWindow.ResizeMode = "NoResize"
+            $waitWindow.WindowStartupLocation = "CenterScreen"
+            $waitWindow.Background = "#001B1B"
+            $waitWindow.Topmost = $true
+
+            $grid = New-Object System.Windows.Controls.Grid
+            $waitWindow.Content = $grid
+
+            $text = New-Object System.Windows.Controls.TextBlock
+            $text.Text = "Please wait while the application closes..."
+            $text.Foreground = "#00FF00"
+            $text.HorizontalAlignment = "Center"
+            $text.VerticalAlignment = "Center"
+            $text.FontSize = 14
+            $grid.Children.Add($text)
+
+            $waitWindow.Show()
+
+            # Load remaining output and cleanup
+            if (Test-Path "$env:TEMP\output.txt") {
+                $remainingLines = (Get-Content "$env:TEMP\output.txt" | Select-Object -Skip $script:lineCount)
+                if ($remainingLines) {
+                    $txtOutput.AppendText([string]::Join("`r`n", $remainingLines) + "`r`n")
+                }
             }
             
             # Stop all processes first
@@ -481,12 +498,12 @@ $window.Add_Closing({
             Remove-Item "$env:TEMP\output.txt" -Force -ErrorAction SilentlyContinue
             Remove-Item $pidFile -Force -ErrorAction SilentlyContinue
 
-            # Allow window to close normally
+            # Close wait window and allow normal window closure
+            $waitWindow.Close()
             $e.Cancel = $false
         }
         catch {
             Write-Warning "Error during cleanup: $_"
-            # Show error and let user decide
             $errorResult = [System.Windows.MessageBox]::Show(
                 "Error during cleanup. Force close application?",
                 "Error",
@@ -691,39 +708,41 @@ $btnStart.Add_Click({
     
     # Create a timer to update UI
     $script:outputTimer = New-Object System.Windows.Threading.DispatcherTimer
-    $script:outputTimer.Interval = [TimeSpan]::FromMilliseconds(100)
+    $script:outputTimer.Interval = [TimeSpan]::FromMilliseconds(5)
+    $script:lineCount = 0
     $script:outputTimer.Add_Tick({
         try {
             if (Test-Path "$env:TEMP\output.txt") {
-                $fs = [System.IO.File]::Open("$env:TEMP\output.txt", 'Open', 'Read', 'ReadWrite')
-                $reader = New-Object System.IO.StreamReader($fs)
-                
-                if ($script:lastOffset -gt 0) {
-                    $reader.BaseStream.Position = $script:lastOffset
-                }
-                
-                while (!$reader.EndOfStream) {
-                    $line = $reader.ReadLine()
-                    if ($line) {
-                        $txtOutput.Dispatcher.Invoke([Action]{
-                            $txtOutput.AppendText("$line`r`n")
+                $lines = Get-Content "$env:TEMP\output.txt"
+                if ($lines.Count -gt $script:lineCount) {
+                    # Only process one new line at a time
+                    $newLine = $lines[$script:lineCount]
+                    $txtOutput.Dispatcher.Invoke([Action]{
+                        $txtOutput.AppendText("$newLine`r`n")
+                        # Only scroll if we're near the bottom
+                        if ($txtScrollViewer.VerticalOffset -ge $txtScrollViewer.ScrollableHeight - 50) {
                             $txtScrollViewer.ScrollToBottom()
-                        })
-                    }
+                        }
+                    })
+                    $script:lineCount++
                 }
-                
-                $script:lastOffset = $reader.BaseStream.Position
-                
-                $reader.Close()
-                $fs.Close()
             }
             
             # Check if process has ended
             if ($script:currentProcess.HasExited) {
-                Start-Sleep -Milliseconds 100  # Give time for final output
+                Start-Sleep -Milliseconds 100
+                # On process end, load all remaining lines at once
+                if (Test-Path "$env:TEMP\output.txt") {
+                    $remainingLines = (Get-Content "$env:TEMP\output.txt" | Select-Object -Skip $script:lineCount)
+                    if ($remainingLines) {
+                        $txtOutput.Dispatcher.Invoke([Action]{
+                            $txtOutput.AppendText([string]::Join("`r`n", $remainingLines) + "`r`n")
+                            $txtScrollViewer.ScrollToBottom()
+                        })
+                    }
+                }
                 Stop-CurrentProcess
             }
-            
         } catch {
             Write-Warning "Error reading output: $_"
         }
@@ -819,3 +838,88 @@ catch {
     Start-Sleep -Seconds 2
     Stop-Process -Id $PID -Force
 }
+
+# Update the window closing handler to ensure all output is read
+$window.Add_Closing({
+    param($windowSender, $e)
+    
+    # Show confirmation dialog
+    $result = [System.Windows.MessageBox]::Show(
+        "Are you sure you want to close the application?",
+        "Confirm Close",
+        [System.Windows.MessageBoxButton]::YesNo,
+        [System.Windows.MessageBoxImage]::Question
+    )
+    
+    if ($result -eq [System.Windows.MessageBoxResult]::Yes) {
+        try {
+            # Create and show wait window
+            $waitWindow = New-Object System.Windows.Window
+            $waitWindow.Title = "Please Wait"
+            $waitWindow.Width = 300
+            $waitWindow.Height = 100
+            $waitWindow.WindowStyle = "None"
+            $waitWindow.ResizeMode = "NoResize"
+            $waitWindow.WindowStartupLocation = "CenterScreen"
+            $waitWindow.Background = "#001B1B"
+            $waitWindow.Topmost = $true
+
+            $grid = New-Object System.Windows.Controls.Grid
+            $waitWindow.Content = $grid
+
+            $text = New-Object System.Windows.Controls.TextBlock
+            $text.Text = "Please wait while the application closes..."
+            $text.Foreground = "#00FF00"
+            $text.HorizontalAlignment = "Center"
+            $text.VerticalAlignment = "Center"
+            $text.FontSize = 14
+            $grid.Children.Add($text)
+
+            $waitWindow.Show()
+
+            # Load remaining output and cleanup
+            if (Test-Path "$env:TEMP\output.txt") {
+                $remainingLines = (Get-Content "$env:TEMP\output.txt" | Select-Object -Skip $script:lineCount)
+                if ($remainingLines) {
+                    $txtOutput.AppendText([string]::Join("`r`n", $remainingLines) + "`r`n")
+                }
+            }
+            
+            # Stop all processes first
+            Stop-CurrentProcess
+
+            # Clean up event subscribers
+            Get-EventSubscriber -SourceIdentifier PowerShell.Exiting -ErrorAction SilentlyContinue | 
+                ForEach-Object {
+                    Remove-Event -SourceIdentifier $_.SourceIdentifier -ErrorAction SilentlyContinue
+                    Unregister-Event -SubscriptionId $_.SubscriptionId -ErrorAction SilentlyContinue
+                }
+
+            # Clean up temp files
+            Remove-Item "$env:TEMP\output.txt" -Force -ErrorAction SilentlyContinue
+            Remove-Item $pidFile -Force -ErrorAction SilentlyContinue
+
+            # Close wait window and allow normal window closure
+            $waitWindow.Close()
+            $e.Cancel = $false
+        }
+        catch {
+            Write-Warning "Error during cleanup: $_"
+            $errorResult = [System.Windows.MessageBox]::Show(
+                "Error during cleanup. Force close application?",
+                "Error",
+                [System.Windows.MessageBoxButton]::YesNo,
+                [System.Windows.MessageBoxImage]::Error
+            )
+            
+            if ($errorResult -eq [System.Windows.MessageBoxResult]::Yes) {
+                Stop-Process -Id $PID -Force
+            } else {
+                $e.Cancel = $true
+            }
+        }
+    }
+    else {
+        $e.Cancel = $true
+    }
+})
