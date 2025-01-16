@@ -74,9 +74,9 @@ $guiSettings = $ini["GUI"] ?? @{
         ResizeMode="CanMinimize">
     <Grid Name="MainGrid">
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="3.4*"/>
             <ColumnDefinition Width="Auto"/>
-            <ColumnDefinition Width="400"/>
+            <ColumnDefinition Width="4*"/>
         </Grid.ColumnDefinitions>
 
         <!-- Left side - Controls -->
@@ -286,14 +286,101 @@ $txtQualityValue = $window.FindName("txtQualityValue")
 $txtDeskewValue = $window.FindName("txtDeskewValue")
 $btnOpenLogs = $window.FindName("btnOpenLogs")
 
-# Initialize ComboBox data - do this only once
-$compressionTypes = @("LZW", "ZIP", "RLE", "NONE", "JPEG", "WEBP")
-$colorspaces = @("Auto", "RGB", "CMYK", "GRAY", "sRGB", "scRGB", "Lab", "XYZ", "HSL", "HSB", "YCbCr", "CMY")
-$psmOptions = 0..13 | ForEach-Object { "PSM $_" }
+# Initialize ComboBox data with complete compression options
+$compressionTypes = @(
+    # Lossless options
+    "None",        # No compression, maximum quality but largest file size
+    "BZip",        # Lossless compression using BZIP algorithm
+    "Fax",         # Lossless CCITT Group 3 fax encoding
+    "Group4",      # Lossless CCITT Group 4 fax encoding
+    "Lossless",    # Lossless JPEG compression
+    "LZW",         # Lossless compression, good for images with large areas of same color
+    "RLE",         # Run Length Encoding, lossless, good for images with large blocks of same color
+    "ZIP",         # Lossless compression, good for images with sharp edges
+    # Lossy options
+    "JPEG",        # Lossy compression, good for photographs
+    "JPEG2000",    # Lossy/lossless compression, better quality than JPEG but slower
+    "WEBP"         # Lossy/lossless compression, modern web format
+)
+
+$colorspaces = @(
+    "Auto",         # Automatically detect and maintain original colorspace
+    "RGB",          # Red, Green, Blue
+    "CMYK",         # Cyan, Magenta, Yellow, Black
+    "GRAY",         # Grayscale
+    "sRGB",         # Standard RGB
+    "scRGB",        # Scene-referred RGB
+    "Lab",          # CIELAB
+    "XYZ",          # CIE XYZ
+    "HSL",          # Hue, Saturation, Lightness
+    "HSB",          # Hue, Saturation, Brightness
+    "YCbCr",        # Luminance, Chrominance
+    "CMY",          # Cyan, Magenta, Yellow
+    "HCL",          # Hue, Chroma, Luminance
+    "HCLp",         # Hue, Chroma, Luminance (polar)
+    "HSI",          # Hue, Saturation, Intensity
+    "HSV",          # Hue, Saturation, Value
+    "HWB",          # Hue, Whiteness, Blackness
+    "Jzazbz",       # Jzazbz color space
+    "LCHab",        # Luminance, Chroma, Hue (CIELAB)
+    "LCHuv",        # Luminance, Chroma, Hue (CIELUV)
+    "LMS",          # Long, Medium, Short (cone response)
+    "Log",          # Logarithmic
+    "Luv",          # CIELUV
+    "OHTA",         # Ohta color space
+    "OkLab",        # OkLab color space
+    "OkLCH",        # OkLCH color space
+    "Rec601YCbCr",  # Rec. 601 YCbCr
+    "Rec709YCbCr",  # Rec. 709 YCbCr
+    "xyY",          # CIE xyY
+    "YCC",          # Luminance, Chrominance (YCC)
+    "YDbDr",        # YDbDr color space
+    "YIQ",          # YIQ color space
+    "YPbPr",        # YPbPr color space
+    "YUV",          # YUV color space
+    "Undefined"     # Undefined color space
+)
+
+$psmOptions = @(
+    "0 - Orientation and script detection (OSD) only",
+    "1 - Automatic page segmentation with OSD",
+    "2 - Automatic page segmentation, but no OSD, or OCR",
+    "3 - Fully automatic page segmentation, but no OSD (Default)",
+    "4 - Assume a single column of text of variable sizes",
+    "5 - Assume a single uniform block of vertically aligned text",
+    "6 - Assume a single uniform block of text",
+    "7 - Treat the image as a single text line",
+    "8 - Treat the image as a single word",
+    "9 - Treat the image as a single word in a circle",
+    "10 - Treat the image as a single character",
+    "11 - Sparse text. Find as much text as possible in no particular order",
+    "12 - Sparse text with OSD",
+    "13 - Raw line. Treat the image as a single text line"
+)
 
 # Set ItemsSource for ComboBoxes
 $cmbCompression.Items.Clear()
-$compressionTypes | ForEach-Object { $cmbCompression.Items.Add($_) }
+$compressionTypes | ForEach-Object {
+    $item = New-Object System.Windows.Controls.ComboBoxItem
+    $item.Tag = $_  # Store actual value in Tag
+    
+    # Set display text with compression type description
+    $displayText = $_ + " - " + $(switch($_) {
+        "None"     { "Lossless - No compression, largest file size" }
+        "BZip"     { "Lossless - BZIP compression algorithm" }
+        "Fax"      { "Lossless - CCITT Group 3 fax encoding" }
+        "Group4"   { "Lossless - CCITT Group 4 fax encoding" }
+        "Lossless" { "Lossless - JPEG compression without quality loss" }
+        "LZW"      { "Lossless - Good for images with large areas of same color" }
+        "RLE"      { "Lossless - Run Length Encoding, good for simple images" }
+        "ZIP"      { "Lossless - Good for images with sharp edges" }
+        "JPEG"     { "Lossy - Best for photographs, smaller files" }
+        "JPEG2000" { "Lossy/Lossless - Advanced JPEG, better quality but slower" }
+        "WEBP"     { "Lossy/Lossless - Modern web format, good compression" }
+    })
+    $item.Content = $displayText
+    $cmbCompression.Items.Add($item)
+}
 
 $cmbColorspace.Items.Clear()
 $colorspaces | ForEach-Object { $cmbColorspace.Items.Add($_) }
@@ -351,7 +438,9 @@ if (Test-Path $iniPath) {
     if ($ini.ContainsKey("ImageMagick")) {
         try {
             # Use SelectedItem for ItemsSource-bound ComboBoxes
-            $cmbCompression.SelectedItem = $ini.ImageMagick.CompressionType
+            $cmbCompression.SelectedItem = $cmbCompression.Items | 
+                Where-Object { $_.Tag -eq $ini.ImageMagick.CompressionType } | 
+                Select-Object -First 1
             $sldQuality.Value = [double]$ini.ImageMagick.Quality
             $sldDeskew.Value = [double]($ini.ImageMagick.DeskewThreshold -replace '%')
             $cmbColorspace.SelectedItem = $ini.ImageMagick.Colorspace
@@ -549,7 +638,7 @@ CreateMissingFolders=ON
 ; Valid options: 
 ;   - Lossless: LZW, ZIP, RLE, NONE
 ;   - Lossy: JPEG, WEBP
-CompressionType=$($cmbCompression.SelectedItem)
+CompressionType=$($cmbCompression.SelectedItem.Tag)
 
 ; Quality setting for lossy compression (0-100)
 ; Only applies when using lossy compression types (JPEG/WEBP)
