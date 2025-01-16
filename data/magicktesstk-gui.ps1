@@ -11,6 +11,42 @@ Add-Type @"
     }
 "@ -ErrorAction Stop
 
+# Add mutex handling
+$mutexId = "Global\MagickTessTK_SingleInstance"
+$mutex = $null
+
+try {
+    $mutex = [System.Threading.Mutex]::OpenExisting($mutexId)
+    # If we reach here, mutex exists, which means another instance is running
+    [System.Windows.MessageBox]::Show(
+        "Another instance of MagickTessTK is already running.",
+        "MagickTessTK",
+        [System.Windows.MessageBoxButton]::OK,
+        [System.Windows.MessageBoxImage]::Warning
+    )
+    exit
+}
+catch [System.Threading.WaitHandleCannotBeOpenedException] {
+    # Mutex doesn't exist, create it
+    $mutex = New-Object System.Threading.Mutex($true, $mutexId)
+}
+catch {
+    # Handle any other errors
+    Write-Warning "Error checking for multiple instances: $_"
+}
+
+# Register cleanup for mutex
+$cleanupMutex = {
+    if ($mutex) {
+        try {
+            $mutex.ReleaseMutex()
+            $mutex.Dispose()
+        } catch {}
+    }
+}
+
+Register-EngineEvent -SourceIdentifier PowerShell.Exiting -Action $cleanupMutex
+
 # Regular imports
 Add-Type -AssemblyName PresentationFramework
 Add-Type -AssemblyName PresentationCore
@@ -587,6 +623,9 @@ $window.Add_Closing({
             Remove-Item "$env:TEMP\output.txt" -Force -ErrorAction SilentlyContinue
             Remove-Item $pidFile -Force -ErrorAction SilentlyContinue
 
+            # Clean up mutex
+            & $cleanupMutex
+
             # Close wait window and allow normal window closure
             $waitWindow.Close()
             $e.Cancel = $false
@@ -987,6 +1026,9 @@ $window.Add_Closing({
             # Clean up temp files
             Remove-Item "$env:TEMP\output.txt" -Force -ErrorAction SilentlyContinue
             Remove-Item $pidFile -Force -ErrorAction SilentlyContinue
+
+            # Clean up mutex
+            & $cleanupMutex
 
             # Close wait window and allow normal window closure
             $waitWindow.Close()
