@@ -23,7 +23,7 @@ if %errorlevel% equ 0 (
 
 if %errorlevel% neq 0 (
     echo Error launching GUI application
-    echo Please ensure PowerShell is installed and try again
+    echo Please ensure PowerShell 7 is installed and try again
     pause
     exit /b 1
 )
