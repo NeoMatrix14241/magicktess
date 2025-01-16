@@ -1,4 +1,4 @@
-# Automated OCR PowerShell Script
+# Automated OCR GUI PowerShell 7 Dedicated Script
 
 **⚡ Alternative to NAPS2 OCR - Designed for Batch OCR Process**
 
@@ -41,16 +41,12 @@ When executed, `start_process.bat` will create the following folders:
 ---
 ## 🛠️ Setup & Installation Instructions
 
-1. Download and extract MagickTess zip file contents
-   - [MagickTess v1.0.0.0 Release](https://github.com/NeoMatrix14241/magicktess/releases/download/MagickTess-v1.0.0.0/MagickTess-v1.0.0.0.zip)
+1. Download and extract MagickTessTK zip file contents
+   - [MagickTessTK v2.0.0.0 Release](https://github.com/NeoMatrix14241/MagickTessTK/releases/download/MagickTessTK-v2.0.0.0/MagickTessTK-v2.0.0.0.zip)
 
 2. Navigate to the `setup` folder and run "setup.bat".
 
-3. Copy `.traineddata` files from `setup/tessdata_best` to Tesseract's tessdata directory:
-   ```
-   Default Location: C:\Program Files\Tesseract-OCR\tessdata
-   ```
-4. Run `start_process.bat` to set up the necessary folders.
+3. Run `launcher.bat` to launch the GUI and setup the OCR process.
 
 ---
 ## ⚙️ Folder Structure & PDF Naming
@@ -104,8 +100,8 @@ input
 ---
 ## 📄 PDF Naming Convention
 
-- **folder1/subfolder1** → `subfolder1.pdf`
-- **folder1/subfolder2** → `subfolder2.pdf`
-- **folder2** → `folder2.pdf`
+- **folder1/subfolder1/many tif files here** → `subfolder1.pdf`
+- **folder1/subfolder2/many tif files here** → `subfolder2.pdf`
+- **folder2/many tif files here** → `folder2.pdf`
 
 ---
