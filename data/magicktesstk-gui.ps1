@@ -34,7 +34,6 @@ $cleanupScript = {
 }
 
 # Register cleanup for different exit scenarios
-$ExecutionContext.SessionState.Module.OnRemove += $cleanupScript
 Register-EngineEvent -SourceIdentifier PowerShell.Exiting -Action $cleanupScript
 trap { & $cleanupScript }
 
@@ -436,34 +435,73 @@ function Stop-CurrentProcess {
 $window.Add_Closing({
     param($sender, $e)
     
-    # Stop all processes
-    Stop-CurrentProcess
+    # Show confirmation dialog
+    $result = [System.Windows.MessageBox]::Show(
+        "Are you sure you want to close the application?",
+        "Confirm Close",
+        [System.Windows.MessageBoxButton]::YesNo,
+        [System.Windows.MessageBoxImage]::Question
+    )
     
-    # Unregister cleanup events
-    $ExecutionContext.SessionState.Module.OnRemove = $null
-    Unregister-EngineEvent -SourceIdentifier PowerShell.Exiting -ErrorAction SilentlyContinue
-    
-    # Get all pwsh processes before termination
-    $pwshProcesses = Get-Process | Where-Object { 
-        $_.Name -like "*pwsh*" -and $_.Id -ne $PID 
-    }
-    
-    # Kill all related pwsh processes
-    foreach ($proc in $pwshProcesses) {
-        try {
-            # Kill process tree
-            $children = Get-CimInstance Win32_Process | 
-                Where-Object { $_.ParentProcessId -eq $proc.Id }
-            foreach ($child in $children) {
-                Stop-Process -Id $child.ProcessId -Force -ErrorAction SilentlyContinue
+    if ($result -eq [System.Windows.MessageBoxResult]::Yes) {
+        # Create progress window
+        $progressWindow = New-Object System.Windows.Window
+        $progressWindow.Title = "Closing Application"
+        $progressWindow.Width = 300
+        $progressWindow.Height = 100
+        $progressWindow.WindowStyle = "None"
+        $progressWindow.ResizeMode = "NoResize"
+        $progressWindow.WindowStartupLocation = "CenterScreen"
+        $progressWindow.Background = "#001B1B"
+        $progressWindow.Topmost = $true
+
+        $grid = New-Object System.Windows.Controls.Grid
+        $progressWindow.Content = $grid
+
+        $text = New-Object System.Windows.Controls.TextBlock
+        $text.Text = "Please wait while the application closes..."
+        $text.Foreground = "#00FF00"
+        $text.HorizontalAlignment = "Center"
+        $text.VerticalAlignment = "Center"
+        $text.FontSize = 14
+        $grid.Children.Add($text)
+
+        # Show progress window
+        $progressWindow.Show()
+        
+        # Process cleanup in background
+        $dispatcher = $progressWindow.Dispatcher
+        $dispatcher.BeginInvoke([Action]{
+            # Stop all processes
+            Stop-CurrentProcess
+            
+            # Unregister cleanup events
+            Unregister-EngineEvent -SourceIdentifier PowerShell.Exiting -ErrorAction SilentlyContinue
+            
+            # Kill all pwsh processes
+            Get-Process | Where-Object { 
+                $_.Name -like "*pwsh*" -and $_.Id -ne $PID 
+            } | ForEach-Object {
+                try {
+                    $children = Get-CimInstance Win32_Process | 
+                        Where-Object { $_.ParentProcessId -eq $_.Id }
+                    foreach ($child in $children) {
+                        Stop-Process -Id $child.ProcessId -Force -ErrorAction SilentlyContinue
+                    }
+                    $_ | Stop-Process -Force
+                } catch {}
             }
-            $proc | Stop-Process -Force
-        } catch {}
+            
+            # Close progress window and exit
+            $progressWindow.Close()
+            Start-Process pwsh -ArgumentList "-NoProfile -WindowStyle Hidden -Command Stop-Process -Id $PID -Force" -WindowStyle Hidden
+            [Environment]::Exit(0)
+        }, [System.Windows.Threading.DispatcherPriority]::Background)
     }
-    
-    # Force terminate our own process
-    Start-Process pwsh -ArgumentList "-NoProfile -WindowStyle Hidden -Command Stop-Process -Id $PID -Force" -WindowStyle Hidden
-    [Environment]::Exit(0)
+    else {
+        # Cancel closing
+        $e.Cancel = $true
+    }
 })
 
 # Function to save settings
@@ -638,24 +676,44 @@ $btnStart.Add_Click({
     
     # Save process ID for cleanup
     $script:currentProcess.Id | Set-Content $pidFile
-
+    
+    # Track last read position
+    $script:lastReadLength = 0
+    
     # Update button states
     $btnStart.IsEnabled = $false
     $btnCancel.IsEnabled = $true
     
     # Create a timer to read output
     $script:outputTimer = New-Object System.Windows.Threading.DispatcherTimer
-    $script:outputTimer.Interval = [TimeSpan]::FromMilliseconds(1000)
+    $script:outputTimer.Interval = [TimeSpan]::FromMilliseconds(1000)  # Reduced update frequency
     $script:outputTimer.Add_Tick({
         if (Test-Path "$env:TEMP\output.txt") {
-            $newContent = Get-Content "$env:TEMP\output.txt" -Raw
-            if ($newContent) {
-                $txtOutput.Text = $newContent
-                # Force scroll to bottom
-                $txtOutput.Focus()
-                $txtOutput.CaretIndex = $txtOutput.Text.Length
-                $txtScrollViewer.ScrollToBottom()
-                $txtOutput.ScrollToEnd()
+            try {
+                # Read file content with file sharing enabled
+                $fileStream = [System.IO.File]::Open("$env:TEMP\output.txt", 
+                    [System.IO.FileMode]::Open,
+                    [System.IO.FileAccess]::Read,
+                    [System.IO.FileShare]::ReadWrite)
+                    
+                $streamReader = New-Object System.IO.StreamReader($fileStream)
+                $content = $streamReader.ReadToEnd()
+                $streamReader.Close()
+                $fileStream.Close()
+
+                if ($content.Length -gt $script:lastReadLength) {
+                    # Only update if there's new content
+                    $txtOutput.Text = $content
+                    $script:lastReadLength = $content.Length
+                    
+                    # Batch UI updates
+                    $txtOutput.Dispatcher.BeginInvoke([Action]{
+                        $txtOutput.CaretIndex = $txtOutput.Text.Length
+                        $txtScrollViewer.ScrollToBottom()
+                    }, [System.Windows.Threading.DispatcherPriority]::Background)
+                }
+            } catch {
+                Write-Warning "Error reading output: $_"
             }
         }
         
