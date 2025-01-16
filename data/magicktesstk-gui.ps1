@@ -203,6 +203,7 @@ $guiSettings = $ini["GUI"] ?? @{
             </GroupBox>
 
             <StackPanel Grid.Row="6" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10">
+                <Button Name="btnOpenLogs" Content="Open Logs" Width="100" Margin="5,0"/>
                 <Button Name="btnSave" Content="Save Settings" Width="100" Margin="5,0"/>
                 <Button Name="btnStart" Content="Start OCR Process" Width="120" Margin="5,0"/>
                 <Button Name="btnCancel" Content="Cancel" Width="80" IsEnabled="False"/>
@@ -283,6 +284,7 @@ $cmbEngineMode = $window.FindName("cmbEngineMode")
 $cmbPSM = $window.FindName("cmbPSM")
 $txtQualityValue = $window.FindName("txtQualityValue")
 $txtDeskewValue = $window.FindName("txtDeskewValue")
+$btnOpenLogs = $window.FindName("btnOpenLogs")
 
 # Initialize ComboBox data - do this only once
 $compressionTypes = @("LZW", "ZIP", "RLE", "NONE", "JPEG", "WEBP")
@@ -786,6 +788,14 @@ $sldQuality.Add_ValueChanged({
 
 $sldDeskew.Add_ValueChanged({
     $txtDeskewValue.Text = "$([Math]::Round($sldDeskew.Value))%"
+})
+
+$btnOpenLogs.Add_Click({
+    $logsPath = Join-Path $PSScriptRoot "logs"
+    if (!(Test-Path $logsPath)) {
+        New-Item -ItemType Directory -Path $logsPath -Force | Out-Null
+    }
+    Start-Process "explorer.exe" -ArgumentList $logsPath
 })
 
 # Show window
