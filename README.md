@@ -2,11 +2,11 @@
 
 **⚡ Alternative to NAPS2 OCR - Designed for Batch OCR Process**
 
-![MagickTessTK](https://github.com/user-attachments/assets/613a487d-0e32-45a0-b021-7dec12b8de88)
-
 ### 🚀 Batch Folder OCR Only
 
 This PowerShell script automates OCR processing for batches of different image files, generating searchable PDFs.
+
+![MagickTessTK](https://github.com/user-attachments/assets/613a487d-0e32-45a0-b021-7dec12b8de88)
 
 ---
 ### Dependencies for MagickTess
