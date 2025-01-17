@@ -132,6 +132,11 @@ $guiSettings = $ini["GUI"] ?? @{
                       FontSize="$($guiSettings.TitleFontSize)" 
                       Margin="0,0,0,10"/>
 
+            <!-- Add Help Button next to the title -->
+            <Button Grid.Row="0" Name="btnHelp" Content="How To Use?"
+                    HorizontalAlignment="Right" VerticalAlignment="Center"
+                    Width="100" Height="30" Margin="0,0,0,10"/>
+
             <GroupBox Grid.Row="2" Header="Folder Settings" Foreground="$($guiSettings.TextColor)" Margin="0,10">
                 <StackPanel>
                     <DockPanel Margin="0,5">
@@ -321,6 +326,7 @@ $cmbPSM = $window.FindName("cmbPSM")
 $txtQualityValue = $window.FindName("txtQualityValue")
 $txtDeskewValue = $window.FindName("txtDeskewValue")
 $btnOpenLogs = $window.FindName("btnOpenLogs")
+$btnHelp = $window.FindName("btnHelp")
 
 # Initialize ComboBox data with complete compression options
 $compressionTypes = @(
@@ -944,6 +950,68 @@ $btnOpenLogs.Add_Click({
         New-Item -ItemType Directory -Path $logsPath -Force | Out-Null
     }
     Start-Process "explorer.exe" -ArgumentList $logsPath
+})
+
+$btnHelp.Add_Click({
+    # Create a new window for the documentation
+    $helpWindow = New-Object System.Windows.Window
+    $helpWindow.Title = "MagickTessTK - How To Use"
+    $helpWindow.Width = 850
+    $helpWindow.Height = 600
+    $helpWindow.WindowStartupLocation = "CenterScreen"
+    
+    # Create a ScrollViewer for scrollable content
+    $scrollViewer = New-Object System.Windows.Controls.ScrollViewer
+    $scrollViewer.VerticalScrollBarVisibility = "Auto"
+    $scrollViewer.HorizontalScrollBarVisibility = "Auto"
+    
+    # Create an Image control
+    $image = New-Object System.Windows.Controls.Image
+    $image.Stretch = "None"
+    
+    # Load the base64 encoded image
+    try {
+        $base64Path = Join-Path $PSScriptRoot "documentation.encoded"
+        if (Test-Path $base64Path) {
+            $base64Content = Get-Content $base64Path
+            $bytes = [Convert]::FromBase64String($base64Content)
+            $memoryStream = New-Object System.IO.MemoryStream
+            $memoryStream.Write($bytes, 0, $bytes.Length)
+            
+            $bitmap = New-Object System.Windows.Media.Imaging.BitmapImage
+            $bitmap.BeginInit()
+            $bitmap.StreamSource = $memoryStream
+            $bitmap.CacheOption = [System.Windows.Media.Imaging.BitmapCacheOption]::OnLoad
+            $bitmap.EndInit()
+            $bitmap.Freeze()
+            
+            $image.Source = $bitmap
+        } else {
+            throw "Documentation image file not found"
+        }
+    } catch {
+        [System.Windows.MessageBox]::Show(
+            "Error loading documentation: $_",
+            "Error",
+            [System.Windows.MessageBoxButton]::OK,
+            [System.Windows.MessageBoxImage]::Error
+        )
+        return
+    }
+    
+    # Add the image to the ScrollViewer
+    $scrollViewer.Content = $image
+    
+    # Set the window content
+    $helpWindow.Content = $scrollViewer
+    
+    # Show the window
+    $helpWindow.ShowDialog()
+    
+    # Cleanup
+    if ($memoryStream) {
+        $memoryStream.Dispose()
+    }
 })
 
 # Show window
