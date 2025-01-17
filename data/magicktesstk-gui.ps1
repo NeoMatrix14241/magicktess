@@ -1035,7 +1035,7 @@ try {
     $timer.Start()
     Write-Host "Starting GUI..."
     $window.ShowDialog() | Out-Null
-} 
+}
 catch {
     Write-Error "Error showing window: $_"
     Write-Error $_.ScriptStackTrace
