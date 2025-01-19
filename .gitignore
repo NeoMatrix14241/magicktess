@@ -14,3 +14,4 @@
 !ReadMe.txt
 
 data/logs/
+data/*.txt

@@ -850,17 +850,27 @@ $btnStart.Add_Click({
     
         # Create a timer to update UI
         $script:outputTimer = New-Object System.Windows.Threading.DispatcherTimer
-        $script:outputTimer.Interval = [TimeSpan]::FromMilliseconds(5)
+        $script:outputTimer.Interval = [TimeSpan]::FromMilliseconds(100)
         $script:lineCount = 0
+        $script:outputLines = New-Object System.Collections.ArrayList
         $script:outputTimer.Add_Tick({
                 try {
                     if (Test-Path "$env:TEMP\output.txt") {
                         $lines = Get-Content "$env:TEMP\output.txt"
                         if ($lines.Count -gt $script:lineCount) {
-                            # Only process one new line at a time
+                            # Process new lines
                             $newLine = $lines[$script:lineCount]
+                            $script:outputLines.Add($newLine) | Out-Null
+                            
+                            # Keep only last 20 lines
+                            if ($script:outputLines.Count -gt 25) {
+                                $script:outputLines.RemoveAt(0)
+                            }
+                            
                             $txtOutput.Dispatcher.Invoke([Action] {
-                                    $txtOutput.AppendText("$newLine`r`n")
+                                    # Clear and repopulate text box
+                                    $txtOutput.Text = $script:outputLines -join "`r`n"
+                                    
                                     # Only scroll if we're near the bottom
                                     if ($txtScrollViewer.VerticalOffset -ge $txtScrollViewer.ScrollableHeight - 50) {
                                         $txtScrollViewer.ScrollToBottom()
@@ -873,12 +883,16 @@ $btnStart.Add_Click({
                     # Check if process has ended
                     if ($script:currentProcess.HasExited) {
                         Start-Sleep -Milliseconds 100
-                        # On process end, load all remaining lines at once
+                        # On process end, load remaining lines while maintaining 100 line limit
                         if (Test-Path "$env:TEMP\output.txt") {
                             $remainingLines = (Get-Content "$env:TEMP\output.txt" | Select-Object -Skip $script:lineCount)
                             if ($remainingLines) {
+                                $script:outputLines.AddRange($remainingLines)
+                                while ($script:outputLines.Count -gt 100) {
+                                    $script:outputLines.RemoveAt(0)
+                                }
                                 $txtOutput.Dispatcher.Invoke([Action] {
-                                        $txtOutput.AppendText([string]::Join("`r`n", $remainingLines) + "`r`n")
+                                        $txtOutput.Text = $script:outputLines -join "`r`n"
                                         $txtScrollViewer.ScrollToBottom()
                                     })
                             }
