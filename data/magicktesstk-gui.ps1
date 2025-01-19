@@ -129,7 +129,7 @@ $guiSettings = $ini["GUI"] ?? @{
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
-            <TextBlock Grid.Row="0" Text="NAPS2 on Steroids" 
+            <TextBlock Grid.Row="0" Text="MagickTessTK OCR" 
                       Foreground="$($guiSettings.TextColor)" 
                       FontSize="$($guiSettings.TitleFontSize)" 
                       Margin="0,0,0,10"/>
