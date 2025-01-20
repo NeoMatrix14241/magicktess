@@ -20,7 +20,7 @@ if %errorlevel% neq 0 (
 
 cls
 echo.
-echo NAPS2 on Steroids
+echo MagickTessTK OCR - Automated OCR Processing Tool
 echo.
 echo The script will only process files as batch and will treat folders as the document where its
 echo pages will be the tif files, read the ReadMe.txt file for proper documentation
