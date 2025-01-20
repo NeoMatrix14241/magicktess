@@ -107,7 +107,7 @@ input
 - **folder2/many tif files here** → `folder2.pdf`
 
 ---
-## MagickTessTK Features List:
+## 🤖 MagickTessTK Features List:
 
 ### Core Features
 - 🔒 Single instance execution with mutex handling
