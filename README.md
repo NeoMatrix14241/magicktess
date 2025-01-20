@@ -109,14 +109,14 @@ input
 ---
 ## 🤖 MagickTessTK Features List:
 
-### Core Features
+**Core Features**
 - 🔒 Single instance execution with mutex handling
 - 📊 Multi-threaded parallel processing
 - 🗄️ Structured folder organization (input/output/archive)
 - 📝 Comprehensive logging with color-coded output
 - ⚙️ Configurable settings via INI file
 
-### Image Processing (ImageMagick)
+**Image Processing (ImageMagick)**
 - 🖼️ Support for multiple image formats (BMP, JPEG, PNG, TIFF, HEIC, etc.)
 - 🔍 Image integrity verification
 - 📐 Automatic image deskewing
@@ -124,30 +124,30 @@ input
 - 🗜️ Customizable compression settings
 - 🔧 Quality control parameters
 
-### OCR Processing (Tesseract)
+**OCR Processing (Tesseract)**
 - 📖 Multi-language OCR support
 - 🎯 Configurable OCR engine modes
 - 📑 Page segmentation optimization
 - 📄 PDF output generation
 
-### PDF Processing (PDFtk)
+**PDF Processing (PDFtk)**
 - 📚 Efficient chunk-based PDF merging
 - 📦 Automatic cleanup of intermediate files
 - 📎 Sequential page ordering
 
-### File Management
+**File Management**
 - 🗂️ Automatic archive organization
 - 🧹 Empty folder cleanup
 - ❌ Corrupted file detection and handling
 - 📁 Subfolder structure preservation
 
-### Monitoring & Reporting
+**Monitoring & Reporting**
 - 📊 Processing statistics tracking
 - ⏱️ Performance timing
 - 📝 Detailed error logging
 - 🔍 File integrity reporting
 
-### Safety Features
+**Safety Features**
 - 💾 Input file preservation
 - ⚠️ Corrupt file isolation
 - 🔄 Process interruption handling
