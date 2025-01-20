@@ -1,3 +1,5 @@
+# Copyright 2025 | Kyle F. Capistrano
+
 # Function to read INI file
 function Get-IniContent {
     param (

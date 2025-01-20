@@ -1,4 +1,6 @@
-﻿# Script metadata and initialization
+﻿# Copyright 2025 | Kyle F. Capistrano
+
+# Script metadata and initialization
 $currentUTC = [System.DateTime]::UtcNow
 $currentUser = $env:USERNAME
 Write-Host "Current Date and Time (UTC): $($currentUTC.ToString('yyyy-MM-dd HH:mm:ss'))"

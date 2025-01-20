@@ -1,4 +1,6 @@
-﻿$global:cancelRequested = $false
+﻿# Copyright 2025 | Kyle F. Capistrano
+
+$global:cancelRequested = $false
 
 $null = Register-EngineEvent -SourceIdentifier PowerShell.Exiting -Action {
     if ($global:cancelRequested) {

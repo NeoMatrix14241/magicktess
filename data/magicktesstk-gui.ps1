@@ -1,3 +1,5 @@
+# Copyright 2025 | Kyle F. Capistrano
+
 # Add PInvoke definitions first, before any other code
 Add-Type @"
     using System;
