@@ -12,6 +12,7 @@
 !data/**/*
 !launcher.bat
 !ReadMe.txt
+!ReadMe.pdf
 
 data/logs/
 data/*.txt
