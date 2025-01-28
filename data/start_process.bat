@@ -1,7 +1,7 @@
+REM Author: Copyright 2025 | Kyle F. Capistrano
 @echo off
 color 0b
 cls
-REM Author: Copyright 2025 | Kyle F. Capistrano
 title MagickTessTK OCR - Automated OCR Processing Tool
 set "scriptPath=%~dp0"
 if "%scriptPath:~-1%"=="\" set "scriptPath=%scriptPath:~0,-1%"

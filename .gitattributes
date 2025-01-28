@@ -1,4 +1,4 @@
 setup/data/** filter=lfs diff=lfs merge=lfs -text
 setup/data filter=lfs diff=lfs merge=lfs -text
 \!setup/setup.bat
-setup/data/Powershell-7.5.0-win-x64.msi filter=lfs diff=lfs merge=lfs -text
+setup/data/Powershell-7.4.7-win-x64.msi filter=lfs diff=lfs merge=lfs -text
