@@ -30,7 +30,7 @@ start /wait "" "data\ImageMagick-7.1.1-41-Q16-HDRI-x64-dll.exe"
 echo ImageMagick installed.
 
 echo Installing PowerShell 7 ...
-start /wait "" "data\PowerShell-7.4.6-win-x64.msi"
+start /wait "" "data\PowerShell-7.5.0-win-x64.msi"
 echo PowerShell 7 installed.
 
 echo Installing PDFtk Server 2.02 ...
