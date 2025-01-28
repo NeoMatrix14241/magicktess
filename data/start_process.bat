@@ -1,3 +1,4 @@
+REM Author: Copyright 2025 | Kyle F. Capistrano
 @echo off
 color 0b
 cls
