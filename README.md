@@ -26,7 +26,7 @@ The PowerShell script utilizes the following software and models for Tesseract-O
    - Models: `eng.traineddata`, `enm.traineddata`, `fil.traineddata`
    
 5. **[PowerShell 7](https://github.com/PowerShell/PowerShell) [For Multithreading Support]**
-   - Version: PowerShell-7.4.7-win-x64.msi
+   - Version: PowerShell-7.5.0-win-x64.msi
   
 6. **[GhostScript](https://ghostscript.com/releases/gsdnld.html)**
    - Version: gs10040w64.exe
